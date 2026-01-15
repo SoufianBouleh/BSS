@@ -66,7 +66,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Riordina - <?= htmlspecialchars($articolo['nome_articolo']) ?></title>
-    <link rel="stylesheet" href="../../assets/css/style1.css">
+    <link rel="stylesheet" href="../../assets/css/pages/admin/base.css">
+    <link rel="stylesheet" href="../../assets/css/pages/admin/scorte.css">
 </head>
 <body>
 <div class="dashboard-wrapper dashboard-admin">
@@ -133,6 +134,8 @@ include __DIR__ . '/../includes/sidebar.php';
 </div>
 </body>
 </html>
+
+
 
 
 
