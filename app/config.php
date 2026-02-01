@@ -1,14 +1,15 @@
 <?php
-// loadEnv(__DIR__ . '/../../.env');
+$envPath = __DIR__ . '/../.env';
+
+$env = parse_ini_file($envPath);
 
 // Configurazione database
-$host = $_ENV['DB_HOST'] ?? 'localhost';
-$dbname = $_ENV['DB_NAME'] ?? 'gestione_fu';
-$username = $_ENV['DB_USER'] ?? 'root';
-$password = $_ENV['DB_PASS'] ?? '';
-$charset = $_ENV['DB_CHARSET'] ?? 'utf8mb4';
+$host = $_env['DB_HOST'] ?? 'localhost';
+$dbname = $_env['DB_NAME'] ?? 'gestione_fu';
+$username = $_env['DB_USERNAME'] ?? 'gestione_fu';
+$password = $_env['DB_PASSWORD'] ?? 'gestione.123';
 
-$dsn = "mysql:host=$host;dbname=$dbname;charset=$charset";
+$dsn = "mysql:host=$host;dbname=$dbname;password=$password";
 
 $options = [
     PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
