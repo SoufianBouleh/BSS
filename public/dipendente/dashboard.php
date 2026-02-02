@@ -9,38 +9,42 @@ if (!isset($_SESSION['user_id'])) {
 
 
 if ($_SESSION['ruolo'] !== 'dipendente') {
-    // se non sei dipendente, vai all’admin dashboard
     header('Location: ../admin/dashboard.php');
     exit;
 }
 
-// qui va il contenuto della dashboard dipendente
-echo "<h1>Benvenuto dipendente {$_SESSION['username']}</h1>";
 ?>
 <!DOCTYPE html>
-<html>
-    <head>
-        <meta charset="utf-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <title></title>
-        <meta name="description" content="">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-       <link rel="stylesheet" href="../assets/css/style.css">
-    <img src="../assets/images/logo.png" class="logo" alt="Logo">
-    </head>
-    <body>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard Dipendente</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
 
-        <div class="dashboard-wrapper dashboard-dipendente">
+<div class="dashboard-wrapper dashboard-admin">
+
     <div class="dashboard-sidebar">
-        <h2>Dipendente</h2>
-        <a href="dashboard.php">Home</a>
-        <a href="richieste/index.php">Le mie richieste</a>
-        <a href="profilo.php">Profilo</a>
+        <h2>User</h2>
+        <a href="dashboard.php" class="active">Dashboard</a>
+        <a href="../dipendente/articoli/index.php">Articoli</a>
+        <a href="ordini/index.php">Richieste</a>
+        <br>
+        <a href="../logout.php">LOGOUT</a>
     </div>
+
     <div class="dashboard-content">
-        <h1>Benvenuto dipendente</h1>
-        <p>Contenuto della dashboard...</p>
+        <h1>Benvenuto, <?= htmlspecialchars($_SESSION['username']) ?></h1>
+
+        <div class="stats-grid">
+            <div class="stat-card">📦 Articoli</div>
+            <div class="stat-card">📑 Richieste</div>
+        </div>
     </div>
+
 </div>
-    </body>
+
+</body>
 </html>
+
