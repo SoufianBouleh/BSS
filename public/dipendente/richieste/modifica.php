@@ -16,7 +16,7 @@ if (!$id) {
     exit;
 }
 
-$dati = $fornitore->find($id);
+$dati = $richiesta->find($id);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $fornitore->update($id, $_POST);

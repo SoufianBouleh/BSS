@@ -35,14 +35,13 @@ $richieste = $richiesta->all();
 
     <div class="dashboard-sidebar">
         <h2>Dipendente</h2>
-     <a href="dashboard.php">Home</a>
+     <a href="../dashboard.php">Home</a>
         <a href="../articoli/index.php" >Catalogo</a>
         <a href="richieste/index.php" class="active">Le mie richieste</a>
         <a href="../.././logout.php">LOGOUT</a>
 
     </div>
 
-    <!-- CONTENUTO -->
     <div class="dashboard-content">
 
         <div class="page-header">
