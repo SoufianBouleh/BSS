@@ -613,3 +613,125 @@ body {
 .fw-semibold {
     font-weight: 600;
 }
+
+        .danger-header {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d0000 100%);
+            border-radius: 12px;
+            padding: 2rem 2.5rem;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            border: 2px solid #dc2626;
+            box-shadow: 0 0 30px rgba(220, 38, 38, 0.15);
+        }
+
+        .danger-icon {
+            font-size: 3.5rem;
+            animation: pulse-danger 1.8s ease-in-out infinite;
+            flex-shrink: 0;
+        }
+
+        @keyframes pulse-danger {
+            0%, 100% { transform: scale(1); filter: drop-shadow(0 0 6px rgba(220,38,38,0.6)); }
+            50% { transform: scale(1.1); filter: drop-shadow(0 0 18px rgba(220,38,38,0.9)); }
+        }
+
+        .danger-header h1 {
+            color: #fff;
+            font-size: 2rem;
+            margin: 0 0 0.25rem 0;
+            letter-spacing: -0.5px;
+        }
+
+        .danger-header p {
+            color: #f87171;
+            margin: 0;
+            font-size: 0.95rem;
+        }
+
+        .danger-header .count-badge {
+            margin-left: auto;
+            background: #dc2626;
+            color: white;
+            font-size: 2rem;
+            font-weight: 800;
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 20px rgba(220,38,38,0.5);
+            flex-shrink: 0;
+        }
+
+        /* Override colori tabella per la pagina critica */
+        .data-table thead {
+            background: linear-gradient(90deg, #1a1a1a 0%, #3b0000 100%);
+        }
+
+        .data-table tbody tr.row-critical {
+            border-left: 4px solid #dc2626;
+        }
+
+        .data-table tbody tr.row-warning {
+            border-left: 4px solid #f59e0b;
+        }
+
+        .stock-val {
+            font-size: 1.2rem;
+            font-weight: 800;
+        }
+
+        .stock-val.rosso { color: #dc2626; }
+        .stock-val.arancio { color: #d97706; }
+
+        .diff-badge {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .riordina-btn {
+            background: #dc2626 !important;
+            border-color: #dc2626 !important;
+            color: white !important;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .riordina-btn:hover {
+            background: #b91c1c !important;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(220,38,38,0.4) !important;
+        }
+
+        .fornitore-info {
+            font-size: 0.8rem;
+            color: var(--gray-500);
+            margin-top: 0.2rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: white;
+            border-radius: 12px;
+            border: 1px solid var(--gray-200);
+        }
+
+        .empty-state .ok-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-danger a.active {
+            border-left-color: #dc2626 !important;
+            color: #f87171 !important;
+        }

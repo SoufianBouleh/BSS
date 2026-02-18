@@ -104,6 +104,13 @@ $countScorteCritiche = count($scorteCritiche);
             </svg>
             Dipendenti
         </a>
+          <a href="scorte/index.php"    style="border-left-color: #dc2626; color: #f87171;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.75rem;">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                <line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg> Scorte Critiche
+          
+        </a>
         <a href="../logout.php" style="border-top: 1px solid var(--gray-800); margin-top: auto;">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.75rem;">
                 <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
@@ -115,8 +122,6 @@ $countScorteCritiche = count($scorteCritiche);
     </div>
 
     <div class="dashboard-content">
-        <h1>Benvenuto, <?= htmlspecialchars($_SESSION['username']) ?></h1>
-
         <div class="stats-grid">
             <div class="stat-card" style="border-top: 3px solid #3b82f6;">
                 <div style="display: flex; justify-content: space-between; align-items: flex-start;">
@@ -184,65 +189,14 @@ $countScorteCritiche = count($scorteCritiche);
                 </div>
             </div>
         </div>
+        <hr>
 
-        <!-- Sezione Scorte Critiche -->
-        <?php if ($countScorteCritiche > 0): ?>
-        <div class="scorte-critiche-section">
-            <div class="scorte-critiche-card">
-                <h2>
-                    Scorte Critiche
-                    <span class="badge badge-danger"><?= $countScorteCritiche ?></span>
-                </h2>
-                <p style="color: var(--gray-600); margin-bottom: 1.5rem;">
-                    I seguenti articoli hanno scorte inferiori al punto di riordino
-                </p>
-                
-                <?php foreach (array_slice($scorteCritiche, 0, 10) as $item): ?>
-                <div class="scorte-item fade-in">
-                    <div class="scorte-item-name">
-                        <strong><?= htmlspecialchars($item['nome_articolo']) ?></strong>
-                        <small style="color: var(--gray-500); display: block; font-weight: normal; margin-top: 0.25rem;">
-                            Categoria: <?= htmlspecialchars($item['categoria'] ?? 'N/A') ?>
-                        </small>
-                    </div>
-                    <div class="scorte-item-stock">
-                        <div>
-                            <small style="color: var(--gray-500); display: block; font-size: 0.75rem;">Stock attuale</small>
-                            <span class="stock-critical"><?= $item['quantita_in_stock'] ?></span>
-                        </div>
-                        <div>
-                            <small style="color: var(--gray-500); display: block; font-size: 0.75rem;">Punto riordino</small>
-                            <span style="font-weight: 600;"><?= $item['punto_riordino'] ?></span>
-                        </div>
-                        <a href="articoli/modifica.php?id=<?= $item['id_articolo'] ?>" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.85rem;">
-                            Riordina
-                        </a>
-                    </div>
-                </div>
-                <?php endforeach; ?>
-                
-                <?php if ($countScorteCritiche > 10): ?>
-                <div style="text-align: center; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--gray-200);">
-                    <a href="articoli/index.php" class="btn btn-primary">
-                        Vedi tutti gli articoli critici (<?= $countScorteCritiche ?>)
-                    </a>
-                </div>
-                <?php endif; ?>
-            </div>
-        </div>
-        <?php else: ?>
-        <div class="alert alert-success">
-            <span style="font-size: 1.5rem; filter: grayscale(100%);">✓</span>
-            <div>
-                <strong>Tutto sotto controllo</strong>
-                <p style="margin: 0; color: var(--gray-600);">Nessuna scorta critica. Tutte le giacenze sono sopra il punto di riordino.</p>
-            </div>
-        </div>
-        <?php endif; ?>
+   
 
     </div>
 
 </div>
+
 
 </body>
 </html>

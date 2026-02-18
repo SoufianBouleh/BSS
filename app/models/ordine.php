@@ -11,7 +11,7 @@ class Ordine
 
     public function all()
     {
-        $stmt = $this->pdo->query("SELECT * FROM ordine");
+        $stmt = $this->pdo->query("SELECT * FROM ordine ORDER BY data_ordine desc");
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 

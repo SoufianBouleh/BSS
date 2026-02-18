@@ -4,7 +4,7 @@ $envPath = __DIR__ . '/../.env';
 $env = parse_ini_file($envPath);
 
 // Configurazione database
-$host = $_env['DB_HOST'] ?? 'localhost';
+$host = $_env['DB_HOST'] ?? '127.0.0.1';
 $dbname = $_env['DB_NAME'] ?? 'gestione_fu';
 $username = $_env['DB_USERNAME'] ?? 'gestione_fu';
 $password = $_env['DB_PASSWORD'] ?? 'gestione.123';
