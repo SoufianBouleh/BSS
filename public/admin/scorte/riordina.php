@@ -250,7 +250,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <div class="dashboard-sidebar">
         <div style="padding: 1.5rem; border-bottom: 1px solid var(--gray-800); display: flex; align-items: center; justify-content: center;">
-            <img src="../assets/images/logo.png" alt="Logo" style="max-width: 120px; height: auto;">
+            <img src="../../assets/images/logo.png" alt="Logo" style="max-width: 120px; height: auto;">
         </div>
         <a href="../dashboard.php">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:.75rem">
@@ -288,7 +288,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:.75rem">
                 <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
                 <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
-            </svg>⚠️ Scorte Critiche
+            </svg>Scorte Critiche
         </a>
         <a href="../../logout.php" style="border-top: 1px solid var(--gray-800); margin-top: auto;">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:.75rem">
@@ -300,7 +300,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <div class="dashboard-content">
 
-        <!-- Header -->
         <div class="riordina-header">
             <div class="icon">📦</div>
             <div>
@@ -313,7 +312,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <a href="index.php" class="btn btn-warning" style="margin-left: auto;">← Torna alle scorte</a>
         </div>
 
-        <!-- Info cards -->
         <div class="info-grid">
             <div class="info-card critica">
                 <div class="label">Stock attuale</div>

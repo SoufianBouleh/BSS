@@ -70,6 +70,7 @@ class Articolo
             $id
         ]);
     }
+    
 
     public function delete($id)
     {

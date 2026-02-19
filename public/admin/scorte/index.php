@@ -44,7 +44,7 @@ $countCritiche = count($scorteCritiche);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>⚠️ Scorte Critiche</title>
+    <title>Scorte Critiche</title>
     <link rel="stylesheet" href="../../assets/css/style1.css">
     <style>
         .danger-header {
@@ -347,7 +347,7 @@ $countCritiche = count($scorteCritiche);
                 <table class="data-table">
                     <thead>
                         <tr>
-                            <th>⚠</th>
+                            <th style="text-align: center;">⚠</th>
                             <th>Articolo</th>
                             <th>Categoria</th>
                             <th>Stock attuale</th>

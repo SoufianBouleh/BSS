@@ -11,7 +11,6 @@ if ($_SESSION['ruolo'] !== 'admin') {
     exit;
 }
 
-// Connessione al database per recuperare dati
 require_once __DIR__ . '/../../app/config.php';
 require_once __DIR__ . '/../../app/models/articolo.php';
 require_once __DIR__ . '/../../app/models/fornitore.php';
@@ -23,20 +22,18 @@ $fornitoreModel = new Fornitore($pdo);
 $ordineModel = new Ordine($pdo);
 $dipendenteModel = new Dipendente($pdo);
 
-// Recupera tutti gli articoli
 $articoli = $articoloModel->all();
 $fornitori = $fornitoreModel->all();
 $ordini = $ordineModel->all();
 $dipendenti = $dipendenteModel->all();
 
-// Calcola scorte critiche (quantità < punto riordino)
+// Calcolo scorte critiche (quantità < punto riordino)
 $scorteCritiche = array_filter($articoli, function($art) {
     return isset($art['quantita_in_stock']) && 
            isset($art['punto_riordino']) && 
            $art['quantita_in_stock'] < $art['punto_riordino'];
 });
 
-// Conta gli elementi
 $countArticoli = count($articoli);
 $countFornitori = count($fornitori);
 $countOrdini = count($ordini);
@@ -104,12 +101,12 @@ $countScorteCritiche = count($scorteCritiche);
             </svg>
             Dipendenti
         </a>
-          <a href="scorte/index.php"    style="border-left-color: #dc2626; color: #f87171;">
+            <a href="scorte/index.php"    style="border-left-color: #dc2626; color: #f87171;">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.75rem;">
                 <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
                 <line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line>
             </svg> Scorte Critiche
-          
+         
         </a>
         <a href="../logout.php" style="border-top: 1px solid var(--gray-800); margin-top: auto;">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.75rem;">
@@ -121,7 +118,7 @@ $countScorteCritiche = count($scorteCritiche);
         </a>
     </div>
 
-    <div class="dashboard-content">
+    <div class="dashboard-content"> 
         <div class="stats-grid">
             <div class="stat-card" style="border-top: 3px solid #3b82f6;">
                 <div style="display: flex; justify-content: space-between; align-items: flex-start;">
@@ -136,8 +133,9 @@ $countScorteCritiche = count($scorteCritiche);
                             <line x1="12" y1="22.08" x2="12" y2="12"></line>
                         </svg>
                     </div>
-                </div>
+                </div>  
             </div>
+            
             
             <div class="stat-card" style="border-top: 3px solid #8b5cf6;">
                 <div style="display: flex; justify-content: space-between; align-items: flex-start;">
@@ -190,7 +188,8 @@ $countScorteCritiche = count($scorteCritiche);
             </div>
         </div>
         <hr>
-
+        <!--GRAFICO COSTO TOTALE E FORNITORE -->
+        
    
 
     </div>
