@@ -250,7 +250,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <div class="dashboard-sidebar">
         <div style="padding: 1.5rem; border-bottom: 1px solid var(--gray-800); display: flex; align-items: center; justify-content: center;">
-            <img src="../assets/images/logo.png" alt="Logo" style="max-width: 120px; height: auto;">
+            <img src="../../assets/images/logo.png" alt="Logo" style="max-width: 120px; height: auto;">
         </div>
         <a href="../dashboard.php">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:.75rem">

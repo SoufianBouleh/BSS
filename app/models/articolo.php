@@ -76,4 +76,14 @@ class Articolo
         $stmt = $this->pdo->prepare("DELETE FROM articolo WHERE id_articolo = ?");
         return $stmt->execute([$id]);
     }
+    public function notOrderedSince6Months() {
+    $sql = "SELECT a.* FROM articolo a 
+            WHERE a.id_articolo NOT IN (
+                SELECT DISTINCT od.id_articolo 
+                FROM ordini_dettaglio od
+                JOIN ordini o ON od.id_ordine = o.id_ordine
+                WHERE o.data_ordine >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
+            )";
+    return $this->pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+}
 }
