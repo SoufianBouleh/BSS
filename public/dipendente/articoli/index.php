@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 session_start();
 
 require_once __DIR__ . '/../../../app/config.php';
@@ -10,7 +10,9 @@ if (!isset($_SESSION['ruolo']) || $_SESSION['ruolo'] !== 'dipendente') {
 }
 
 $articolo = new Articolo($pdo);
-$articoli = $articolo->all();
+$articoli = array_values(array_filter($articolo->all(), function ($a) {
+    return (int)($a['disponibile'] ?? 1) === 1;
+}));
 
 $categorie = [];
 foreach ($articoli as $a) {
@@ -32,44 +34,45 @@ sort($categorie);
             flex-wrap: wrap;
             gap: 10px;
             align-items: center;
-            background: var(--gray-900, #111827);
-            border: 1px solid var(--gray-800, #1f2937);
-            border-radius: 8px;
-            padding: 12px 16px;
-            margin-bottom: 15px;
+            background: #fff;
+            border: 1px solid var(--gray-200);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1rem;
         }
 
         .filtri-box input,
         .filtri-box select {
-            background: var(--gray-800, #1f2937);
-            border: 1px solid var(--gray-700, #374151);
-            color: #e5e7eb;
-            border-radius: 5px;
-            padding: 6px 10px;
-            font-size: 0.85rem;
+            background: #fff;
+            border: 1px solid var(--gray-300);
+            color: var(--gray-900);
+            border-radius: 8px;
+            padding: .65rem .75rem;
+            font-size: .9rem;
         }
 
         .filtri-box input:focus,
         .filtri-box select:focus {
             outline: none;
-            border-color: #3b82f6;
+            border-color: var(--gray-900);
         }
 
         .filtri-box label {
-            font-size: 0.78rem;
-            color: #9ca3af;
+            font-size: .78rem;
+            color: var(--gray-600);
             font-weight: 600;
             text-transform: uppercase;
         }
 
         .btn-reset {
-            background: transparent;
-            border: 1px solid #374151;
-            color: #9ca3af;
-            border-radius: 5px;
-            padding: 6px 12px;
+            background: #fff;
+            border: 1px solid var(--gray-300);
+            color: var(--gray-900);
+            border-radius: 8px;
+            padding: .65rem .95rem;
             cursor: pointer;
-            font-size: 0.82rem;
+            font-size: .85rem;
+            font-weight: 600;
         }
 
         .alfabeto {
@@ -176,6 +179,10 @@ sort($categorie);
                 <polyline points="10 9 9 9 8 9"></polyline>
             </svg>
             Mie Richieste
+        </a>
+        <a href="../impostazioni/index.php">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.75rem;"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            Impostazioni
         </a>
         <a href="../../logout.php" style="border-top: 1px solid var(--gray-800); margin-top: auto;">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.75rem;">
@@ -369,3 +376,4 @@ sort($categorie);
 
 </body>
 </html>
+

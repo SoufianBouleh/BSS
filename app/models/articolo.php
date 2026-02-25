@@ -80,9 +80,9 @@ class Articolo
     public function notOrderedSince6Months() {
     $sql = "SELECT a.* FROM articolo a 
             WHERE a.id_articolo NOT IN (
-                SELECT DISTINCT od.id_articolo 
-                FROM ordini_dettaglio od
-                JOIN ordini o ON od.id_ordine = o.id_ordine
+                SELECT DISTINCT c.id_articolo 
+                FROM comprende c
+                JOIN ordine o ON c.id_ordine = o.id_ordine
                 WHERE o.data_ordine >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
             )";
     return $this->pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);

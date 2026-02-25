@@ -2,74 +2,31 @@
 session_start();
 
 require_once __DIR__ . '/../../../app/config.php';
-require_once __DIR__ . '/../../../app/models/articolo.php';
-require_once __DIR__ . '/../../../app/models/fornitore.php';
-require_once __DIR__ . '/../../../app/models/ordine.php';
+require_once __DIR__ . '/../../../app/models/richiesta.php';
 
 if (!isset($_SESSION['ruolo']) || $_SESSION['ruolo'] !== 'admin') {
     header('Location: ../../login.php');
     exit;
 }
 
-$articoloModel = new Articolo($pdo);
-$fornitoreModel = new Fornitore($pdo);
-$ordineModel = new Ordine($pdo);
-
+$richiestaModel = new Richiesta($pdo);
 $id = (int)($_GET['id'] ?? 0);
 if ($id <= 0) {
     header('Location: index.php');
     exit;
 }
 
-$articolo = $articoloModel->find($id);
-if (!$articolo) {
+$richiesta = $richiestaModel->findWithDetails($id);
+if (!$richiesta) {
     header('Location: index.php');
     exit;
-}
-
-$fornitori = $fornitoreModel->all();
-$fornitorePreferito = (int)($articolo['id_fornitore_preferito'] ?? 0);
-$qtaSuggerita = max(1, ((int)$articolo['punto_riordino'] * 2) - (int)$articolo['quantita_in_stock']);
-
-$errori = [];
-$success = false;
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $idFornitore = (int)($_POST['id_fornitore'] ?? 0);
-    $qta = (int)($_POST['quantita'] ?? 0);
-    $dataOrdine = trim((string)($_POST['data_ordine'] ?? ''));
-    $dataConsegna = trim((string)($_POST['data_consegna_prevista'] ?? ''));
-
-    if ($idFornitore <= 0) $errori[] = 'Seleziona un fornitore.';
-    if ($qta <= 0) $errori[] = 'La quantita deve essere maggiore di zero.';
-    if ($dataOrdine === '') $errori[] = 'Data ordine obbligatoria.';
-    if ($dataConsegna === '') $errori[] = 'Data consegna prevista obbligatoria.';
-
-    if (empty($errori)) {
-        try {
-            $ordineModel->createWithItems([
-                'data_ordine' => $dataOrdine,
-                'data_consegna_prevista' => $dataConsegna,
-                'id_fornitore' => $idFornitore
-            ], [
-                [
-                    'id_articolo' => $articolo['id_articolo'],
-                    'quantita' => $qta
-                ]
-            ]);
-            $success = true;
-        } catch (Throwable $e) {
-            $errori[] = $e->getMessage();
-        }
-    }
 }
 ?>
 <!DOCTYPE html>
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Riordina - <?= htmlspecialchars($articolo['nome_articolo']) ?></title>
+    <title>Dettaglio Richiesta</title>
     <link rel="stylesheet" href="../../assets/css/style1.css">
 </head>
 <body>
@@ -94,7 +51,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.75rem;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
             Ordini
         </a>
-        <a href="../richieste/index.php">
+        <a href="../richieste/index.php" class="active">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.75rem;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
             Richieste dipendenti
         </a>
@@ -102,7 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.75rem;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
             Dipendenti
         </a>
-        <a href="../scorte/index.php" class="active scorte-link">
+        <a href="../scorte/index.php" class="scorte-link">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.75rem;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
             Scorte critiche
         </a>
@@ -118,55 +75,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <div class="dashboard-content">
         <div class="page-header">
-            <h1>Riordina <?= htmlspecialchars($articolo['nome_articolo']) ?></h1>
-            <a href="index.php" class="btn btn-warning">Torna alle scorte</a>
+            <h1>Richiesta #<?= (int)$richiesta['id_richiesta'] ?></h1>
+            <a href="index.php" class="btn btn-warning">Torna alla lista</a>
         </div>
 
-        <?php if ($success): ?>
-            <div class="alert alert-success">
-                Ordine creato con stato <strong>inviato</strong>. Lo stock aumentera solo dopo la conferma dell'ordine.
-            </div>
-            <a href="../ordini/index.php" class="btn btn-primary">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.75rem;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-            Vai agli ordini
-        </a>
-        <?php else: ?>
-            <?php foreach ($errori as $err): ?>
-                <div class="alert alert-danger"><?= htmlspecialchars($err) ?></div>
+        <div class="form-crud" style="max-width:100%;">
+            <p><strong>Dipendente:</strong> <?= htmlspecialchars(($richiesta['cognome'] ?? '') . ' ' . ($richiesta['nome'] ?? '')) ?> (<?= htmlspecialchars($richiesta['reparto'] ?? '') ?>)</p>
+            <p><strong>Data richiesta:</strong> <?= htmlspecialchars($richiesta['data_richiesta'] ?? '---') ?></p>
+            <p><strong>Data approvazione:</strong> <?= htmlspecialchars($richiesta['data_approvazione'] ?? '---') ?></p>
+            <p><strong>Stato:</strong> <?= htmlspecialchars(str_replace('_', ' ', $richiesta['stato'] ?? '---')) ?></p>
+            <p><strong>Note:</strong> <?= htmlspecialchars($richiesta['note'] ?: '---') ?></p>
+        </div>
+
+        <table class="data-table mt-2">
+            <thead>
+            <tr>
+                <th>Articolo</th>
+                <th>Quantita</th>
+                <th>Urgente</th>
+                <th>Descrizione</th>
+            </tr>
+            </thead>
+            <tbody>
+            <?php if (empty($richiesta['dettagli'])): ?>
+                <tr><td colspan="4" class="text-center">Nessun articolo associato.</td></tr>
+            <?php endif; ?>
+            <?php foreach ($richiesta['dettagli'] as $d): ?>
+                <tr>
+                    <td><?= htmlspecialchars($d['nome_articolo'] ?? '---') ?></td>
+                    <td><?= (int)$d['quantita_richiesta'] ?> <?= htmlspecialchars($d['unita_misura'] ?? '') ?></td>
+                    <td><?= (int)$d['urgente'] === 1 ? 'Si' : 'No' ?></td>
+                    <td><?= htmlspecialchars($d['descrizione'] ?: '---') ?></td>
+                </tr>
             <?php endforeach; ?>
-
-            <form method="post" class="form-crud">
-                <label>Articolo</label>
-                <input type="text" value="<?= htmlspecialchars($articolo['nome_articolo']) ?>" readonly>
-
-                <label>Stock attuale</label>
-                <input type="text" value="<?= (int)$articolo['quantita_in_stock'] ?> <?= htmlspecialchars($articolo['unita_misura'] ?? '') ?>" readonly>
-
-                <label>Punto riordino</label>
-                <input type="text" value="<?= (int)$articolo['punto_riordino'] ?>" readonly>
-
-                <label>Fornitore</label>
-                <select name="id_fornitore" required>
-                    <option value="">Seleziona fornitore</option>
-                    <?php foreach ($fornitori as $f): ?>
-                        <option value="<?= (int)$f['id_fornitore'] ?>" <?= $fornitorePreferito === (int)$f['id_fornitore'] ? 'selected' : '' ?>>
-                            <?= htmlspecialchars($f['nome_fornitore']) ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
-
-                <label>Quantita da ordinare</label>
-                <input type="number" name="quantita" min="1" value="<?= htmlspecialchars((string)($_POST['quantita'] ?? $qtaSuggerita)) ?>" required>
-
-                <label>Data ordine</label>
-                <input type="date" name="data_ordine" value="<?= htmlspecialchars((string)($_POST['data_ordine'] ?? date('Y-m-d'))) ?>" required>
-
-                <label>Data consegna prevista</label>
-                <input type="date" name="data_consegna_prevista" value="<?= htmlspecialchars((string)($_POST['data_consegna_prevista'] ?? date('Y-m-d', strtotime('+7 days')))) ?>" required>
-
-                <button type="submit">Crea ordine (inviato)</button>
-            </form>
-        <?php endif; ?>
+            </tbody>
+        </table>
     </div>
 </div>
 </body>

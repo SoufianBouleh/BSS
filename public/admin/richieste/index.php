@@ -2,120 +2,65 @@
 session_start();
 
 require_once __DIR__ . '/../../../app/config.php';
-require_once __DIR__ . '/../../../app/models/fornitore.php';
+require_once __DIR__ . '/../../../app/models/richiesta.php';
 
 if (!isset($_SESSION['ruolo']) || $_SESSION['ruolo'] !== 'admin') {
     header('Location: ../../login.php');
     exit;
 }
 
-$fornitoreModel = new Fornitore($pdo);
+$richiestaModel = new Richiesta($pdo);
+$messaggio = '';
+$errore = '';
 
-if (isset($_GET['delete'])) {
-    $fornitoreModel->delete((int)$_GET['delete']);
-    header('Location: index.php');
-    exit;
-}
-
-$q = trim((string)($_GET['q'] ?? ''));
-$citta = trim((string)($_GET['citta'] ?? ''));
-$lettera = strtoupper(trim((string)($_GET['lettera'] ?? '')));
-$haMail = trim((string)($_GET['ha_mail'] ?? ''));
-$haPiva = trim((string)($_GET['ha_piva'] ?? ''));
-$ordina = trim((string)($_GET['ordina'] ?? 'nome_asc'));
-
-$sql = "SELECT * FROM fornitore WHERE 1=1";
-$params = [];
-
-if ($q !== '') {
-    $like = '%' . $q . '%';
-    $sql .= " AND (
-        nome_fornitore LIKE ? OR
-        cf LIKE ? OR
-        mail LIKE ? OR
-        tel LIKE ? OR
-        p_iva LIKE ? OR
-        citta LIKE ?
-    )";
-    $params[] = $like;
-    $params[] = $like;
-    $params[] = $like;
-    $params[] = $like;
-    $params[] = $like;
-    $params[] = $like;
-}
-
-if ($citta !== '') {
-    $sql .= " AND citta = ?";
-    $params[] = $citta;
-}
-
-if ($lettera !== '' && preg_match('/^[A-Z]$/', $lettera)) {
-    $sql .= " AND UPPER(nome_fornitore) LIKE ?";
-    $params[] = $lettera . '%';
-}
-
-if ($haMail === '1') {
-    $sql .= " AND COALESCE(TRIM(mail), '') <> ''";
-} elseif ($haMail === '0') {
-    $sql .= " AND COALESCE(TRIM(mail), '') = ''";
-}
-
-if ($haPiva === '1') {
-    $sql .= " AND COALESCE(TRIM(p_iva), '') <> ''";
-} elseif ($haPiva === '0') {
-    $sql .= " AND COALESCE(TRIM(p_iva), '') = ''";
-}
-
-$orderMap = [
-    'nome_asc' => 'nome_fornitore ASC',
-    'nome_desc' => 'nome_fornitore DESC',
-    'citta_asc' => 'citta ASC, nome_fornitore ASC'
-];
-$sql .= " ORDER BY " . ($orderMap[$ordina] ?? $orderMap['nome_asc']);
-
-$stmtF = $pdo->prepare($sql);
-$stmtF->execute($params);
-$fornitori = $stmtF->fetchAll(PDO::FETCH_ASSOC);
-
-$stmtCity = $pdo->query("SELECT DISTINCT citta FROM fornitore WHERE citta IS NOT NULL AND TRIM(citta) <> '' ORDER BY citta ASC");
-$cittaList = $stmtCity->fetchAll(PDO::FETCH_COLUMN);
-
-function qf(array $current, array $override): string
-{
-    $q = array_merge($current, $override);
-    foreach ($q as $k => $v) {
-        if ($v === null || $v === '') {
-            unset($q[$k]);
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $azione = $_POST['azione'] ?? '';
+    $id = (int)($_POST['id_richiesta'] ?? 0);
+    try {
+        if ($id > 0 && in_array($azione, ['approvata', 'respinta', 'evasa'], true)) {
+            $richiestaModel->updateStato($id, $azione, $_POST['note'] ?? null);
+            $messaggio = "Richiesta #{$id} aggiornata a stato {$azione}.";
         }
+    } catch (Throwable $e) {
+        $errore = $e->getMessage();
     }
-    return http_build_query($q);
 }
 
-$filtroCorrente = [
-    'q' => $q,
-    'citta' => $citta,
-    'lettera' => $lettera,
-    'ha_mail' => $haMail,
-    'ha_piva' => $haPiva,
-    'ordina' => $ordina
+$filtri = [
+    'q' => trim((string)($_GET['q'] ?? '')),
+    'stato' => trim((string)($_GET['stato'] ?? '')),
+    'id_dipendente' => (int)($_GET['id_dipendente'] ?? 0),
+    'dal' => trim((string)($_GET['dal'] ?? '')),
+    'al' => trim((string)($_GET['al'] ?? ''))
 ];
+
+$richieste = $richiestaModel->allForAdmin($filtri);
+
+$dipendenti = $pdo->query("SELECT id_dipendente, nome, cognome FROM dipendente ORDER BY cognome, nome")->fetchAll(PDO::FETCH_ASSOC);
 ?>
 <!DOCTYPE html>
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Gestione Fornitori</title>
+    <title>Richieste Dipendenti</title>
     <link rel="stylesheet" href="../../assets/css/style1.css">
     <style>
-        .filters { display:grid; grid-template-columns:2fr 1fr 1fr 1fr auto; gap:.75rem; background:#fff; border:1px solid var(--gray-200); border-radius:12px; padding:1rem; margin-bottom:1rem; }
-        .filters input, .filters select { width:100%; margin:0; padding:.65rem .75rem; border:1px solid var(--gray-300); border-radius:8px; }
-        .alfabeto { display:flex; flex-wrap:wrap; gap:6px; margin-bottom: 1rem; }
-        .lettera-link { width:30px; height:30px; display:flex; align-items:center; justify-content:center; border-radius:6px; border:1px solid #d1d5db; background:#f3f4f6; color:#374151; text-decoration:none; font-size:.78rem; font-weight:700; }
-        .lettera-link:hover { background:#e5e7eb; }
-        .lettera-link.attiva { background:#9a3412; border-color:#9a3412; color:#fff; }
-        .lettera-link.tutti { width:auto; padding:0 10px; }
-        @media (max-width: 1024px) { .filters { grid-template-columns:1fr 1fr; } }
+        .filters {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: .75rem;
+            background: #fff;
+            border: 1px solid var(--gray-200);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        .filters input, .filters select { width:100%; padding:.65rem .75rem; margin:0; border:1px solid var(--gray-300); border-radius:8px; }
+        .status { font-weight:700; text-transform:uppercase; font-size:.75rem; }
+        .status-in_attesa { color:#b45309; }
+        .status-approvata { color:#166534; }
+        .status-respinta { color:#991b1b; }
+        .status-evasa { color:#1d4ed8; }
     </style>
 </head>
 <body>
@@ -132,7 +77,7 @@ $filtroCorrente = [
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.75rem;"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
             Articoli
         </a>
-        <a href="../fornitori/index.php" class="active">
+        <a href="../fornitori/index.php">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.75rem;"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
             Fornitori
         </a>
@@ -140,7 +85,7 @@ $filtroCorrente = [
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.75rem;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
             Ordini
         </a>
-        <a href="../richieste/index.php">
+        <a href="../richieste/index.php" class="active">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.75rem;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
             Richieste dipendenti
         </a>
@@ -164,73 +109,82 @@ $filtroCorrente = [
 
     <div class="dashboard-content">
         <div class="page-header">
-            <h1>Fornitori</h1>
-            <a href="aggiungi.php" class="btn btn-primary">+ Aggiungi fornitore</a>
+            <h1>Richieste dipendenti</h1>
         </div>
 
+        <?php if ($messaggio): ?><div class="alert alert-success"><?= htmlspecialchars($messaggio) ?></div><?php endif; ?>
+        <?php if ($errore): ?><div class="alert alert-danger"><?= htmlspecialchars($errore) ?></div><?php endif; ?>
+
         <form method="get" class="filters">
-            <input type="text" name="q" value="<?= htmlspecialchars($q) ?>" placeholder="Nome, CF, email o telefono">
-            <select name="citta">
-                <option value="">Tutte le citta</option>
-                <?php foreach ($cittaList as $city): ?>
-                    <option value="<?= htmlspecialchars($city) ?>" <?= $citta === $city ? 'selected' : '' ?>><?= htmlspecialchars($city) ?></option>
+            <input type="text" name="q" value="<?= htmlspecialchars($filtri['q']) ?>" placeholder="ID, dipendente o note">
+            <select name="stato">
+                <option value="">Tutti gli stati</option>
+                <?php foreach (['in_attesa', 'approvata', 'respinta', 'evasa'] as $st): ?>
+                    <option value="<?= $st ?>" <?= $filtri['stato'] === $st ? 'selected' : '' ?>><?= ucfirst(str_replace('_', ' ', $st)) ?></option>
                 <?php endforeach; ?>
             </select>
-            <select name="ha_mail">
-                <option value="">Email: tutte</option>
-                <option value="1" <?= $haMail === '1' ? 'selected' : '' ?>>Con email</option>
-                <option value="0" <?= $haMail === '0' ? 'selected' : '' ?>>Senza email</option>
+            <select name="id_dipendente">
+                <option value="0">Tutti i dipendenti</option>
+                <?php foreach ($dipendenti as $d): ?>
+                    <option value="<?= (int)$d['id_dipendente'] ?>" <?= $filtri['id_dipendente'] === (int)$d['id_dipendente'] ? 'selected' : '' ?>>
+                        <?= htmlspecialchars($d['cognome'] . ' ' . $d['nome']) ?>
+                    </option>
+                <?php endforeach; ?>
             </select>
-            <select name="ha_piva">
-                <option value="">P.IVA: tutte</option>
-                <option value="1" <?= $haPiva === '1' ? 'selected' : '' ?>>Con P.IVA</option>
-                <option value="0" <?= $haPiva === '0' ? 'selected' : '' ?>>Senza P.IVA</option>
-            </select>
-            <select name="ordina">
-                <option value="nome_asc" <?= $ordina === 'nome_asc' ? 'selected' : '' ?>>Nome A-Z</option>
-                <option value="nome_desc" <?= $ordina === 'nome_desc' ? 'selected' : '' ?>>Nome Z-A</option>
-                <option value="citta_asc" <?= $ordina === 'citta_asc' ? 'selected' : '' ?>>Citta + Nome</option>
-            </select>
+            <input type="date" name="dal" value="<?= htmlspecialchars($filtri['dal']) ?>">
             <div style="display:flex;gap:.5rem;">
+                <input type="date" name="al" value="<?= htmlspecialchars($filtri['al']) ?>">
                 <button type="submit" class="btn btn-primary">Filtra</button>
                 <a href="index.php" class="btn btn-warning">Reset</a>
             </div>
         </form>
 
-        <div class="alfabeto">
-            <a class="lettera-link tutti <?= $lettera === '' ? 'attiva' : '' ?>" href="?<?= qf($filtroCorrente, ['lettera' => null]) ?>">Tutti</a>
-            <?php foreach (range('A', 'Z') as $l): ?>
-                <a class="lettera-link <?= $lettera === $l ? 'attiva' : '' ?>" href="?<?= qf($filtroCorrente, ['lettera' => $l]) ?>"><?= $l ?></a>
-            <?php endforeach; ?>
-        </div>
-
         <table class="data-table">
             <thead>
             <tr>
-                <th>Nome</th>
-                <th>CF</th>
-                <th>Email</th>
-                <th>Citta</th>
-                <th>Telefono</th>
-                <th>P.IVA</th>
+                <th>ID</th>
+                <th>Dipendente</th>
+                <th>Data richiesta</th>
+                <th>Stato</th>
+                <th>Righe</th>
+                <th>Note</th>
                 <th>Azioni</th>
             </tr>
             </thead>
             <tbody>
-            <?php if (empty($fornitori)): ?>
-                <tr><td colspan="7" class="text-center">Nessun fornitore trovato.</td></tr>
+            <?php if (empty($richieste)): ?>
+                <tr><td colspan="7" class="text-center">Nessuna richiesta trovata.</td></tr>
             <?php endif; ?>
-            <?php foreach ($fornitori as $f): ?>
+            <?php foreach ($richieste as $r): ?>
+                <?php $stato = (string)$r['stato']; ?>
                 <tr>
-                    <td><?= htmlspecialchars($f['nome_fornitore'] ?? '---') ?></td>
-                    <td><?= htmlspecialchars($f['cf'] ?? '---') ?></td>
-                    <td><?= htmlspecialchars($f['mail'] ?? '---') ?></td>
-                    <td><?= htmlspecialchars($f['citta'] ?? '---') ?></td>
-                    <td><?= htmlspecialchars($f['tel'] ?? '---') ?></td>
-                    <td><?= htmlspecialchars($f['p_iva'] ?? '---') ?></td>
+                    <td>#<?= (int)$r['id_richiesta'] ?></td>
+                    <td><?= htmlspecialchars(($r['cognome'] ?? '') . ' ' . ($r['nome'] ?? '')) ?><br><span class="text-muted"><?= htmlspecialchars($r['reparto'] ?? '') ?></span></td>
+                    <td><?= htmlspecialchars($r['data_richiesta'] ?? '---') ?></td>
+                    <td><span class="status status-<?= htmlspecialchars($stato) ?>"><?= htmlspecialchars(str_replace('_', ' ', $stato)) ?></span></td>
+                    <td><?= (int)($r['righe'] ?? 0) ?> articoli</td>
+                    <td><?= htmlspecialchars($r['note'] ?: '---') ?></td>
                     <td class="actions">
-                        <a href="modifica.php?id=<?= (int)$f['id_fornitore'] ?>" class="btn btn-warning">Modifica</a>
-                        <a href="index.php?delete=<?= (int)$f['id_fornitore'] ?>" class="btn btn-danger" onclick="return confirm('Eliminare fornitore?');">Elimina</a>
+                        <a href="view.php?id=<?= (int)$r['id_richiesta'] ?>" class="btn btn-info">Vedi</a>
+                        <?php if ($stato === 'in_attesa' || $stato === 'respinta'): ?>
+                            <form method="post" style="display:inline;">
+                                <input type="hidden" name="id_richiesta" value="<?= (int)$r['id_richiesta'] ?>">
+                                <input type="hidden" name="azione" value="approvata">
+                                <button type="submit" class="btn btn-success">Approva</button>
+                            </form>
+                            <form method="post" style="display:inline;">
+                                <input type="hidden" name="id_richiesta" value="<?= (int)$r['id_richiesta'] ?>">
+                                <input type="hidden" name="azione" value="respinta">
+                                <button type="submit" class="btn btn-warning">Respingi</button>
+                            </form>
+                        <?php endif; ?>
+                        <?php if ($stato === 'approvata'): ?>
+                            <form method="post" style="display:inline;">
+                                <input type="hidden" name="id_richiesta" value="<?= (int)$r['id_richiesta'] ?>">
+                                <input type="hidden" name="azione" value="evasa">
+                                <button type="submit" class="btn btn-primary">Segna evasa</button>
+                            </form>
+                        <?php endif; ?>
                     </td>
                 </tr>
             <?php endforeach; ?>

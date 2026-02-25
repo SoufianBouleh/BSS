@@ -44,34 +44,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login</title>
-    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="../public/assets/css/style.css">
 </head>
 <body>
-    <div class="auth-container">
-        <img src="assets/images/logo.png" class="logo" alt="Logo">
-        <h1>Login</h1>
-        
-        <?php if ($errore): ?>
-            <div class="alert-error"><?= $errore ?></div>
-        <?php endif; ?>
-        
-        <form method="POST">
-            <div class="form-group">
-                <label>Username</label>
-                <input type="text" name="username" required autofocus>
+    <div class="auth-shell">
+        <div class="auth-panel">
+            <div class="auth-brand">
+                <img src="assets/images/logo.png" alt="Logo">
+                <h2>BSS</h2>
+                <p>Bouleh Supply System<br>Gestione forniture ufficio e cancelleria</p>
             </div>
-            
-            <div class="form-group">
-                <label>Password</label>
-                <input type="password" name="password" required>
+            <div class="auth-form-side">
+                <h1>Bentornato!</h1>
+                <p class="auth-subtitle">Accedi al tuo account</p>
+
+                <?php if ($errore): ?>
+                    <div class="alert-error"><?= htmlspecialchars($errore) ?></div>
+                <?php endif; ?>
+
+                <form method="POST">
+                    <div class="form-group">
+                        <label>Username</label>
+                        <input type="text" name="username" required autofocus>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" name="password" required>
+                    </div>
+
+                    <button type="submit">Accedi al Sistema</button>
+                </form>
+
+                <div class="auth-links">
+                    <a href="registrazione.php">Registrati</a>
+                </div>
             </div>
-            
-            <button type="submit">Accedi</button>
-        </form>
-        
-        <div class="link">
-            <a href="registrazione.php">Registrati</a>
         </div>
     </div>
+    <footer class="app-footer">BSS &bull; Instagram: @bss.office &bull; LinkedIn: BSS Supply &bull; Email: info@bss.local</footer>
 </body>
 </html>

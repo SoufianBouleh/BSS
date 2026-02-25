@@ -15,14 +15,56 @@ class Ordine
         return $this->allWithFornitore();
     }
 
-    public function allWithFornitore()
+    public function allWithFornitore($filters = [])
     {
         $sql = "SELECT o.*, f.nome_fornitore
                 FROM ordine o
                 INNER JOIN fornitore f ON f.id_fornitore = o.id_fornitore
-                ORDER BY o.data_ordine DESC, o.id_ordine DESC";
-        $stmt = $this->pdo->query($sql);
+                WHERE 1=1";
+        $params = [];
+
+        if (!empty($filters['stato']) && in_array($filters['stato'], $this->statiValidi, true)) {
+            $sql .= " AND o.stato_ordine = :stato";
+            $params[':stato'] = $filters['stato'];
+        }
+
+        if (!empty($filters['id_fornitore'])) {
+            $sql .= " AND o.id_fornitore = :id_fornitore";
+            $params[':id_fornitore'] = (int)$filters['id_fornitore'];
+        }
+
+        if (!empty($filters['q'])) {
+            $sql .= " AND (
+                f.nome_fornitore LIKE :q OR
+                CAST(o.id_ordine AS CHAR) LIKE :q
+            )";
+            $params[':q'] = '%' . trim((string)$filters['q']) . '%';
+        }
+
+        if (!empty($filters['dal'])) {
+            $sql .= " AND o.data_ordine >= :dal";
+            $params[':dal'] = $filters['dal'];
+        }
+
+        if (!empty($filters['al'])) {
+            $sql .= " AND o.data_ordine <= :al";
+            $params[':al'] = $filters['al'];
+        }
+
+        $sql .= " ORDER BY o.data_ordine DESC, o.id_ordine DESC";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function countByStato($stato)
+    {
+        if (!in_array($stato, $this->statiValidi, true)) {
+            return 0;
+        }
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM ordine WHERE stato_ordine = ?");
+        $stmt->execute([$stato]);
+        return (int)$stmt->fetchColumn();
     }
 
     public function find($id)
@@ -79,24 +121,6 @@ class Ordine
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function create($data)
-    {
-        $dataOrdine = $this->normalizzaDatiOrdine($data);
-        $costoTotale = isset($data['costo_totale']) ? (float)$data['costo_totale'] : 0;
-        $sql = "INSERT INTO ordine
-                (data_ordine, data_consegna_prevista, data_consegna_effettiva, stato_ordine, costo_totale, id_fornitore)
-                VALUES (?, ?, ?, ?, ?, ?)";
-        $stmt = $this->pdo->prepare($sql);
-        return $stmt->execute([
-            $dataOrdine['data_ordine'],
-            $dataOrdine['data_consegna_prevista'],
-            $dataOrdine['data_consegna_effettiva'],
-            $dataOrdine['stato_ordine'],
-            $costoTotale,
-            $dataOrdine['id_fornitore']
-        ]);
-    }
-
     public function createWithItems($data, $righe = [])
     {
         $dataOrdine = $this->normalizzaDatiOrdine($data);
@@ -111,13 +135,11 @@ class Ordine
         try {
             $sqlOrdine = "INSERT INTO ordine
                 (data_ordine, data_consegna_prevista, data_consegna_effettiva, stato_ordine, costo_totale, id_fornitore)
-                VALUES (?, ?, ?, ?, 0, ?)";
+                VALUES (?, ?, NULL, 'inviato', 0, ?)";
             $stmtOrdine = $this->pdo->prepare($sqlOrdine);
             $stmtOrdine->execute([
                 $dataOrdine['data_ordine'],
                 $dataOrdine['data_consegna_prevista'],
-                $dataOrdine['data_consegna_effettiva'],
-                $dataOrdine['stato_ordine'],
                 $dataOrdine['id_fornitore']
             ]);
 
@@ -157,11 +179,6 @@ class Ordine
         }
     }
 
-    public function update($id, $data)
-    {
-        return $this->updateBase($id, $data);
-    }
-
     public function updateBase($id, $data)
     {
         $id = (int)$id;
@@ -170,50 +187,91 @@ class Ordine
             throw new InvalidArgumentException('Ordine non trovato.');
         }
 
-        if ($attuale['stato_ordine'] === 'confermato') {
-            throw new RuntimeException('Ordine confermato: modifica non consentita.');
+        if ($attuale['stato_ordine'] !== 'rifiutato') {
+            throw new RuntimeException('Si possono modificare solo ordini rifiutati.');
         }
 
         $dataOrdine = $this->normalizzaDatiOrdine($data);
         $sql = "UPDATE ordine
                 SET data_ordine = ?,
                     data_consegna_prevista = ?,
-                    data_consegna_effettiva = ?,
-                    stato_ordine = ?,
+                    data_consegna_effettiva = NULL,
+                    stato_ordine = 'inviato',
                     id_fornitore = ?
                 WHERE id_ordine = ?";
         $stmt = $this->pdo->prepare($sql);
         return $stmt->execute([
             $dataOrdine['data_ordine'],
             $dataOrdine['data_consegna_prevista'],
-            $dataOrdine['data_consegna_effettiva'],
-            $dataOrdine['stato_ordine'],
             $dataOrdine['id_fornitore'],
             $id
         ]);
     }
 
-    public function delete($id)
-    {
-        $stmt = $this->pdo->prepare("DELETE FROM ordine WHERE id_ordine = ?");
-        return $stmt->execute([(int)$id]);
-    }
-
-    public function deleteIfInviato($id)
+    public function annulla($id)
     {
         $id = (int)$id;
-        $stmt = $this->pdo->prepare("DELETE FROM ordine WHERE id_ordine = ? AND stato_ordine = 'inviato'");
+        $stmt = $this->pdo->prepare("UPDATE ordine SET stato_ordine = 'annullato' WHERE id_ordine = ? AND stato_ordine = 'inviato'");
+        $stmt->execute([$id]);
+        return $stmt->rowCount() > 0;
+    }
+
+    public function rifiuta($id)
+    {
+        $id = (int)$id;
+        $stmt = $this->pdo->prepare("UPDATE ordine SET stato_ordine = 'rifiutato' WHERE id_ordine = ? AND stato_ordine = 'inviato'");
+        $stmt->execute([$id]);
+        return $stmt->rowCount() > 0;
+    }
+
+    public function conferma($id)
+    {
+        $id = (int)$id;
+        $this->pdo->beginTransaction();
+
+        try {
+            $stmtCheck = $this->pdo->prepare("SELECT stato_ordine FROM ordine WHERE id_ordine = ? FOR UPDATE");
+            $stmtCheck->execute([$id]);
+            $ordine = $stmtCheck->fetch(PDO::FETCH_ASSOC);
+
+            if (!$ordine || $ordine['stato_ordine'] !== 'inviato') {
+                $this->pdo->rollBack();
+                return false;
+            }
+
+            $sqlStock = "UPDATE articolo a
+                         INNER JOIN comprende c ON c.id_articolo = a.id_articolo
+                         SET a.quantita_in_stock = a.quantita_in_stock + c.quantita_ordinata
+                         WHERE c.id_ordine = ?";
+            $stmtStock = $this->pdo->prepare($sqlStock);
+            $stmtStock->execute([$id]);
+
+            $stmtOrdine = $this->pdo->prepare("UPDATE ordine
+                                               SET stato_ordine = 'confermato',
+                                                   data_consegna_effettiva = CURDATE()
+                                               WHERE id_ordine = ?");
+            $stmtOrdine->execute([$id]);
+
+            $this->pdo->commit();
+            return true;
+        } catch (Throwable $e) {
+            $this->pdo->rollBack();
+            throw $e;
+        }
+    }
+
+    public function deleteStorico($id)
+    {
+        $id = (int)$id;
+        $stmt = $this->pdo->prepare("DELETE FROM ordine
+                                     WHERE id_ordine = ?
+                                       AND stato_ordine IN ('confermato', 'rifiutato', 'annullato', 'consegnato')");
         $stmt->execute([$id]);
         return $stmt->rowCount() > 0;
     }
 
     private function normalizzaDatiOrdine($data)
     {
-        $stato = isset($data['stato_ordine']) ? trim((string)$data['stato_ordine']) : 'inviato';
-        if (!in_array($stato, $this->statiValidi, true)) {
-            $stato = 'inviato';
-        }
-
         $dataOrdine = $this->normalizzaData($data['data_ordine'] ?? '');
         if ($dataOrdine === null) {
             throw new InvalidArgumentException('La data ordine e obbligatoria.');
@@ -227,8 +285,6 @@ class Ordine
         return [
             'data_ordine' => $dataOrdine,
             'data_consegna_prevista' => $this->normalizzaData($data['data_consegna_prevista'] ?? null),
-            'data_consegna_effettiva' => $this->normalizzaData($data['data_consegna_effettiva'] ?? null),
-            'stato_ordine' => $stato,
             'id_fornitore' => $idFornitore
         ];
     }

@@ -1,39 +1,62 @@
 ﻿<?php
 session_start();
-
 require_once __DIR__ . '/../../../app/config.php';
-require_once __DIR__ . '/../../../app/models/dipendente.php';
 
-if (!isset($_SESSION['ruolo']) || $_SESSION['ruolo'] !== 'admin') {
+if (!isset($_SESSION['ruolo']) || $_SESSION['ruolo'] !== 'dipendente') {
     header('Location: ../../login.php');
     exit;
 }
 
-$dipendenteModel = new Dipendente($pdo);
-$id = (int)($_GET['id'] ?? 0);
-if ($id <= 0) {
-    header('Location: index.php');
-    exit;
-}
-
-$dati = $dipendenteModel->find($id);
-if (!$dati) {
-    header('Location: index.php');
-    exit;
-}
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $dipendenteModel->update($id, $_POST);
-    header('Location: index.php');
-    exit;
-}
+$stmt = $pdo->prepare(
+    "SELECT u.username, u.email, u.ruolo, u.ultimo_accesso, d.nome, d.cognome
+     FROM utente u
+     LEFT JOIN dipendente d ON d.id_utente = u.id_utente
+     WHERE u.id_utente = ?"
+);
+$stmt->execute([(int)$_SESSION['user_id']]);
+$profilo = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
 ?>
 <!DOCTYPE html>
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Modifica Dipendente</title>
+    <title>Impostazioni Account</title>
     <link rel="stylesheet" href="../../assets/css/style1.css">
+    <style>
+        .credenziali-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border: 1px solid var(--gray-200);
+            border-radius: 12px;
+            padding: 1.2rem;
+            box-shadow: var(--shadow);
+        }
+        .credenziali-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: .9rem;
+        }
+        .credenziale-item {
+            background: #fff;
+            border: 1px solid var(--gray-200);
+            border-radius: 8px;
+            padding: .8rem;
+        }
+        .credenziale-item small {
+            display: block;
+            color: var(--gray-500);
+            font-size: .75rem;
+            text-transform: uppercase;
+            letter-spacing: .05em;
+            margin-bottom: .2rem;
+        }
+        .credenziale-item strong {
+            color: var(--gray-900);
+            word-break: break-word;
+        }
+        @media (max-width: 768px) {
+            .credenziali-grid { grid-template-columns: 1fr; }
+        }
+    </style>
 </head>
 <body>
 <div class="dashboard-wrapper dashboard-admin">
@@ -47,29 +70,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </a>
         <a href="../articoli/index.php">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.75rem;"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
-            Articoli
-        </a>
-        <a href="../fornitori/index.php">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.75rem;"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
-            Fornitori
-        </a>
-        <a href="../ordini/index.php">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.75rem;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-            Ordini
+            Catalogo articoli
         </a>
         <a href="../richieste/index.php">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.75rem;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-            Richieste dipendenti
+            Mie richieste
         </a>
-        <a href="../dipendenti/index.php" class="active">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.75rem;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-            Dipendenti
-        </a>
-        <a href="../scorte/index.php" class="scorte-link">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.75rem;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-            Scorte critiche
-        </a>
-        <a href="../impostazioni/index.php">
+        <a href="../impostazioni/index.php" class="active">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.75rem;"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
             Impostazioni
         </a>
@@ -78,33 +85,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             Logout
         </a>
     </div>
+
     <div class="dashboard-content">
         <div class="page-header">
-            <h1>Modifica dipendente</h1>
-            <a href="index.php" class="btn btn-warning">Torna alla lista</a>
+            <h1>Impostazioni account</h1>
         </div>
-        <form method="post" class="form-crud">
-            <label>Nome</label>
-            <input name="nome" value="<?= htmlspecialchars((string)$dati['nome']) ?>" required>
 
-            <label>Cognome</label>
-            <input name="cognome" value="<?= htmlspecialchars((string)$dati['cognome']) ?>" required>
-
-            <label>Telefono</label>
-            <input name="tel" value="<?= htmlspecialchars((string)$dati['tel']) ?>">
-
-            <label>Reparto</label>
-            <input name="reparto" value="<?= htmlspecialchars((string)$dati['reparto']) ?>" required>
-
-            <button type="submit">Aggiorna dipendente</button>
-        </form>
+        <div class="credenziali-card">
+            <h3 class="mb-2">Credenziali di accesso</h3>
+            <div class="credenziali-grid">
+                <div class="credenziale-item">
+                    <small>Nome completo</small>
+                    <strong><?= htmlspecialchars(trim(($profilo['nome'] ?? '') . ' ' . ($profilo['cognome'] ?? '')) ?: '---') ?></strong>
+                </div>
+                <div class="credenziale-item">
+                    <small>Username</small>
+                    <strong><?= htmlspecialchars($profilo['username'] ?? '---') ?></strong>
+                </div>
+                <div class="credenziale-item">
+                    <small>Email</small>
+                    <strong><?= htmlspecialchars($profilo['email'] ?? '---') ?></strong>
+                </div>
+                <div class="credenziale-item">
+                    <small>Ruolo</small>
+                    <strong><?= htmlspecialchars($profilo['ruolo'] ?? 'dipendente') ?></strong>
+                </div>
+                <div class="credenziale-item">
+                    <small>Ultimo accesso</small>
+                    <strong><?= htmlspecialchars($profilo['ultimo_accesso'] ?? '---') ?></strong>
+                </div>
+                <div class="credenziale-item">
+                    <small>Password</small>
+                    <strong>Non visibile per sicurezza</strong>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 </body>
 </html>
-
-
-
-
-
 

@@ -11,7 +11,7 @@ class Dipendente
 
     public function all()
     {
-        $stmt = $this->pdo->query("SELECT * FROM dipendente");
+        $stmt = $this->pdo->query("SELECT d.*, u.username, u.email FROM dipendente d LEFT JOIN utente u ON u.id_utente = d.id_utente");
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
@@ -60,7 +60,30 @@ class Dipendente
 
     public function delete($id)
     {
+        $id = (int)$id;
+        $this->pdo->beginTransaction();
+        try {
+            $stmtFind = $this->pdo->prepare("SELECT id_utente FROM dipendente WHERE id_dipendente = ?");
+            $stmtFind->execute([$id]);
+            $row = $stmtFind->fetch(PDO::FETCH_ASSOC);
+            if (!$row) {
+                $this->pdo->rollBack();
+                return false;
+            }
 
-        //da fare
+            $stmtDeleteDip = $this->pdo->prepare("DELETE FROM dipendente WHERE id_dipendente = ?");
+            $stmtDeleteDip->execute([$id]);
+
+            if (!empty($row['id_utente'])) {
+                $stmtDeleteUser = $this->pdo->prepare("DELETE FROM utente WHERE id_utente = ? AND ruolo = 'dipendente'");
+                $stmtDeleteUser->execute([(int)$row['id_utente']]);
+            }
+
+            $this->pdo->commit();
+            return true;
+        } catch (Throwable $e) {
+            $this->pdo->rollBack();
+            throw $e;
+        }
     }
 }

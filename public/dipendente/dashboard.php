@@ -18,13 +18,11 @@ require_once __DIR__ . '/../../app/models/richiesta.php';
 $articoloModel = new Articolo($pdo);
 $richiestaModel = new Richiesta($pdo);
 
-$articoli = $articoloModel->all();
-$richieste = $richiestaModel->all();
-
-$userId = (int)$_SESSION['user_id'];
-$mieRichieste = array_filter($richieste, function ($r) use ($userId) {
-    return isset($r['id_dipendente']) ? (int)$r['id_dipendente'] === $userId : true;
-});
+$articoli = array_values(array_filter($articoloModel->all(), function ($a) {
+    return (int)($a['disponibile'] ?? 1) === 1;
+}));
+$idDipendente = $richiestaModel->getDipendenteIdByUtente((int)$_SESSION['user_id']);
+$mieRichieste = $idDipendente ? $richiestaModel->allByDipendente($idDipendente) : [];
 
 $richiesteInAttesa = array_filter($mieRichieste, function ($r) {
     $stato = strtolower(trim((string)($r['stato'] ?? '')));
@@ -76,6 +74,13 @@ $countInAttesa = count($richiesteInAttesa);
                 <polyline points="10 9 9 9 8 9"></polyline>
             </svg>
            Mie Richieste
+        </a>
+        <a href="impostazioni/index.php">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.75rem;">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+            Impostazioni
         </a>
         <a href="../logout.php" style="border-top: 1px solid var(--gray-800); margin-top: auto;">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.75rem;">

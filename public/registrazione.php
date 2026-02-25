@@ -54,65 +54,79 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
-    <div class="auth-container">
-        <img src="assets/images/logo.png" class="logo" alt="Logo">
-        <h1>Registrazione Dipendente</h1>
-        
-        <?php if ($errore): ?>
-            <div class="alert-error"><?= $errore ?></div>
-        <?php endif; ?>
-        
-        <?php if ($successo): ?>
-            <div class="alert-success"><?= $successo ?></div>
-        <?php endif; ?>
-        
-        <form method="POST">
-            <div class="form-group">
-                <label>Username *</label>
-                <input type="text" name="username" required value="<?= isset($_POST['username']) ? htmlspecialchars($_POST['username']) : '' ?>">
+    <div class="auth-shell">
+        <div class="auth-panel">
+            <div class="auth-brand">
+                <img src="assets/images/logo.png" alt="Logo">
+                <h2>BSS</h2>
+                <p>Registrazione dipendente<br>Sistema forniture aziendali</p>
             </div>
-            
-            <div class="form-group">
-                <label>Password *</label>
-                <input type="password" name="password" required>
+            <div class="auth-form-side">
+                <h1>Nuovo Account</h1>
+                <p class="auth-subtitle">Compila i campi per registrarti</p>
+
+                <?php if ($errore): ?>
+                    <div class="alert-error"><?= htmlspecialchars($errore) ?></div>
+                <?php endif; ?>
+
+                <?php if ($successo): ?>
+                    <div class="alert-success"><?= htmlspecialchars($successo) ?></div>
+                <?php endif; ?>
+
+                <form method="POST" class="registration-form">
+                    <div class="form-grid">
+                    <div class="form-group">
+                        <label>Username *</label>
+                        <input type="text" name="username" required value="<?= isset($_POST['username']) ? htmlspecialchars($_POST['username']) : '' ?>">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Password *</label>
+                        <input type="password" name="password" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Conferma Password *</label>
+                        <input type="password" name="conferma_password" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Nome *</label>
+                        <input type="text" name="nome" required value="<?= isset($_POST['nome']) ? htmlspecialchars($_POST['nome']) : '' ?>">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Cognome *</label>
+                        <input type="text" name="cognome" required value="<?= isset($_POST['cognome']) ? htmlspecialchars($_POST['cognome']) : '' ?>">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Email *</label>
+                        <input type="email" name="email" required value="<?= isset($_POST['email']) ? htmlspecialchars($_POST['email']) : '' ?>">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Telefono *</label>
+                        <input type="text" name="tel" required value="<?= isset($_POST['tel']) ? htmlspecialchars($_POST['tel']) : '' ?>">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Reparto</label>
+                        <input type="text" name="reparto" value="<?= isset($_POST['reparto']) ? htmlspecialchars($_POST['reparto']) : '' ?>">
+                    </div>
+                    
+                    </div>
+                    <br>
+
+                    <button type="submit">Invia Richiesta</button>
+                </form>
+
+                <div class="auth-links">
+                    <a href="login.php">Torna al Login</a>
+                </div>
             </div>
-            
-            <div class="form-group">
-                <label>Conferma Password *</label>
-                <input type="password" name="conferma_password" required>
-            </div>
-            
-            <div class="form-group">
-                <label>Nome *</label>
-                <input type="text" name="nome" required value="<?= isset($_POST['nome']) ? htmlspecialchars($_POST['nome']) : '' ?>">
-            </div>
-            
-            <div class="form-group">
-                <label>Cognome *</label>
-                <input type="text" name="cognome" required value="<?= isset($_POST['cognome']) ? htmlspecialchars($_POST['cognome']) : '' ?>">
-            </div>
-            
-            <div class="form-group">
-                <label>Email *</label>
-                <input type="email" name="email" required value="<?= isset($_POST['email']) ? htmlspecialchars($_POST['email']) : '' ?>">
-            </div>
-            
-            <div class="form-group">
-                <label>Telefono *</label>
-                <input type="text" name="tel" required value="<?= isset($_POST['tel']) ? htmlspecialchars($_POST['tel']) : '' ?>">
-            </div>
-            
-            <div class="form-group">
-                <label>Reparto</label>
-                <input type="text" name="reparto" value="<?= isset($_POST['reparto']) ? htmlspecialchars($_POST['reparto']) : '' ?>">
-            </div>
-            
-            <button type="submit">Invia Richiesta</button>
-        </form>
-        
-        <div class="link">
-            <a href="login.php">Torna al Login</a>
         </div>
     </div>
+    <footer class="app-footer">BSS &bull; Instagram: @bss.office &bull; LinkedIn: BSS Supply &bull; Email: info@bss.local</footer>
 </body>
 </html>

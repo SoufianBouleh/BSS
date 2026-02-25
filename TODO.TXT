@@ -1,0 +1,22 @@
+sistemare la grafica:
+footer con info tipo social....
+metti un background color glocable di un grigino sfumato sfumato
+ poi la grafica del filtraggio di articolo deve essere come le altre a tema , 
+ scrita BSS sotto il logo della scatola,
+ login : sistema la grafica vedendo gli allegati (ovvimanete registrazione non c'è ma poi capire cosa voglio vedendo i campi e op tema) e in base al dispositivo schermata diversa => (metto le foto in allegato dove quella con metaà vviola metaà bainco è per dispositivi grossi mentre l'latra è per i mobile)
+ tutte le sezioni con l'icona (per richiesta dipendenti usa un altra icona) che c'è già( tipo in dahsbordd si vedono le altre ), scrpte critcihe rimane rosso con sibolo e emtti simbolo per richieste dipendenti  
+voglio che la grafica in basea al dispositivo cambi usa le media queries, quindi modifica anche il css per la responsive
+ filtraggio basato con queries usano tipo where 1=1 and con if...: filtraggi più approfonditic'è non una casella che fa tutto ma prorpio per ogni campo , per i nomi basta che iniziano con una lettere
+
+ aggiungi per admin una sezione sotto vivino a login con icona ingranaggio impostazione in cui ho  a sinistra la navbar , sotto il footer e a detsra una sorta di due  div, dove uno cliccandolo mi porta ad una schermata di  articoli (in cui però  posso modificare tutto : prezzo,punto rioridino ,  )
+ e l'atro parte  invece mi porta all'elencco degli utenti in cui posso modificare la password e ovviamneto viene hashata. ste due schermata di elenco voglio che sia cmq in phpmyadmin in cui posso modificare dalla casella tipo e con il bottone update
+ scrittua codice sempplice ,usando switch, nome metodi in italiano, poi sempre in impostazione voglioc he fai una checkbox in cui se ci fossero scorte critiche  in quella sezione crea in automatico crea gli ordini da solo , se la check non è spunatat allora non vengono creati gli ordiniautomatici am devo farlo io a mano.
+
+se metto non disponibile in articolo io posso vederlo da admin sia disponibile che non ma l'utente(dipendente) può vedere solo quelli diposnibili
+per quannto riguarda il dipendente voglio che fa si che per la richiesta possa mettere una richiesta di un articolo non solo desvrizione c'è deve essere un artocolo in modo tale che iniando la richiesta l'admijn sa se accettare o no.
+
+aggiungi anche ste querie: 2. Trovare i dipendenti che hanno richiesto più di n articoli nell'ultimo mese.(mettilo sotto forma di filtraggio in articoli)
+3. Ottenere gli articoli che non sono stati richiesti negli ultimi n mesi.(mettilo sotto forma di filtraggio in articoli)
+
+poi vorrei anche che aggiungessi questi per  ordini in admin mettessi la colonna apparte per a accettazione e rifiuto dell'ordine e metti come nome colonna a"zioni da fornitore esterno" e prima  di quella colonna mettessi tipo un colonna  "azioni" con i bottono: vedi,modifica,elimina,annulla in base allo stato della richiesta, se è confermata allora ho vedi+elimina(dallo storico) (fai in modo che possono elimianre più record se son confermati,rifiutati, annuallti pk poi si creano troppi record), poi se l'ordine è inviato posso vedi+annullare, se è rifiutato avroò vedi+modifica(per poter rinviare)+elimina
+
