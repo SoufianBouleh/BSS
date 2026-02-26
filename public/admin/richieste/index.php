@@ -30,7 +30,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $messaggio = "Eliminate {$cont} richieste.";
         }
     }
-    if ($id > 0 && in_array($azione, ['approvata', 'respinta', 'evasa'], true)) {
+    if ($id > 0 && $azione === 'approvata') {
+        $esito = $richiestaModel->approvaECreaOrdineSemplice($id);
+        if (!empty($esito['ok'])) {
+            $messaggio = "Richiesta #{$id} approvata. Ordine inviato creato: #" . (int)$esito['id_ordine'] . ".";
+        } else {
+            $errore = (string)($esito['errore'] ?? 'Errore durante approvazione richiesta.');
+        }
+    } elseif ($id > 0 && in_array($azione, ['respinta', 'evasa'], true)) {
         $richiestaModel->aggiornaStato($id, $azione, $_POST['note'] ?? null);
         $messaggio = "Richiesta #{$id} aggiornata a stato {$azione}.";
     }

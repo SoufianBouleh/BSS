@@ -112,6 +112,7 @@ include __DIR__ . '/../includes/sidebar.php';
         <form method="post" id="formOrdini">
             <input type="hidden" name="azione" id="azioneOrdine" value="">
             <input type="hidden" name="id_ordine" id="idOrdineAzione" value="">
+            <!-- file js a parte per eliminazione di più record -->
             <button type="submit" class="btn btn-danger mb-2" id="bulkDeleteBtn">Elimina ordini selezionati</button>
             <table class="data-table">
                 <thead>
