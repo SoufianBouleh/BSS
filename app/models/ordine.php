@@ -17,41 +17,37 @@ class Ordine
 
     public function tuttiConFornitore($filters = [])
     {
-        $sql = "SELECT o.*, f.nome_fornitore
-                FROM ordine o
-                INNER JOIN fornitore f ON f.id_fornitore = o.id_fornitore
-                WHERE 1=1";
+        $sql = "SELECT ordine.*, fornitore.nome_fornitore
+                FROM ordine
+                INNER JOIN fornitore ON fornitore.id_fornitore = ordine.id_fornitore";
+        $where = [];
         $params = [];
 
         if (!empty($filters['stato']) && in_array($filters['stato'], $this->statiValidi, true)) {
-            $sql .= " AND o.stato_ordine = :stato";
+            $where[] = "ordine.stato_ordine = :stato";
             $params[':stato'] = $filters['stato'];
         }
 
         if (!empty($filters['id_fornitore'])) {
-            $sql .= " AND o.id_fornitore = :id_fornitore";
+            $where[] = "ordine.id_fornitore = :id_fornitore";
             $params[':id_fornitore'] = (int)$filters['id_fornitore'];
         }
 
-        if (!empty($filters['q'])) {
-            $sql .= " AND (
-                f.nome_fornitore LIKE :q OR
-                CAST(o.id_ordine AS CHAR) LIKE :q
-            )";
-            $params[':q'] = '%' . trim((string)$filters['q']) . '%';
-        }
-
         if (!empty($filters['dal'])) {
-            $sql .= " AND o.data_ordine >= :dal";
+            $where[] = "ordine.data_ordine >= :dal";
             $params[':dal'] = $filters['dal'];
         }
 
         if (!empty($filters['al'])) {
-            $sql .= " AND o.data_ordine <= :al";
+            $where[] = "ordine.data_ordine <= :al";
             $params[':al'] = $filters['al'];
         }
 
-        $sql .= " ORDER BY o.data_ordine DESC, o.id_ordine DESC";
+        if (!empty($where)) {
+            $sql .= " WHERE " . implode(' AND ', $where);
+        }
+
+        $sql .= " ORDER BY ordine.data_ordine DESC, ordine.id_ordine DESC";
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($params);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -76,10 +72,10 @@ class Ordine
 
     public function trovaConFornitore($id)
     {
-        $sql = "SELECT o.*, f.nome_fornitore
-                FROM ordine o
-                INNER JOIN fornitore f ON f.id_fornitore = o.id_fornitore
-                WHERE o.id_ordine = ?";
+        $sql = "SELECT ordine.*, fornitore.nome_fornitore
+                FROM ordine
+                INNER JOIN fornitore ON fornitore.id_fornitore = ordine.id_fornitore
+                WHERE ordine.id_ordine = ?";
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([(int)$id]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
@@ -87,20 +83,20 @@ class Ordine
 
     public function trovaDettagli($idOrdine)
     {
-        $sql = "SELECT c.id_articolo,
-                       a.nome_articolo,
-                       a.unita_misura,
-                       c.quantita_ordinata,
-                       c.prezzo AS totale_riga,
+        $sql = "SELECT comprende.id_articolo,
+                       articolo.nome_articolo,
+                       articolo.unita_misura,
+                       comprende.quantita_ordinata,
+                       comprende.prezzo AS totale_riga,
                        CASE
-                           WHEN c.quantita_ordinata > 0 AND c.prezzo IS NOT NULL
-                           THEN ROUND(c.prezzo / c.quantita_ordinata, 2)
-                           ELSE a.prezzo_unitario
+                           WHEN comprende.quantita_ordinata > 0 AND comprende.prezzo IS NOT NULL
+                           THEN ROUND(comprende.prezzo / comprende.quantita_ordinata, 2)
+                           ELSE articolo.prezzo_unitario
                        END AS prezzo_unitario
-                FROM comprende c
-                INNER JOIN articolo a ON a.id_articolo = c.id_articolo
-                WHERE c.id_ordine = ?
-                ORDER BY a.nome_articolo ASC";
+                FROM comprende
+                INNER JOIN articolo ON articolo.id_articolo = comprende.id_articolo
+                WHERE comprende.id_ordine = ?
+                ORDER BY articolo.nome_articolo ASC";
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([(int)$idOrdine]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -226,10 +222,10 @@ class Ordine
             return false;
         }
 
-        $sqlStock = "UPDATE articolo a
-                     INNER JOIN comprende c ON c.id_articolo = a.id_articolo
-                     SET a.quantita_in_stock = a.quantita_in_stock + c.quantita_ordinata
-                     WHERE c.id_ordine = ?";
+        $sqlStock = "UPDATE articolo
+                     INNER JOIN comprende ON comprende.id_articolo = articolo.id_articolo
+                     SET articolo.quantita_in_stock = articolo.quantita_in_stock + comprende.quantita_ordinata
+                     WHERE comprende.id_ordine = ?";
         $stmtStock = $this->pdo->prepare($sqlStock);
         $stmtStock->execute([$id]);
 
@@ -253,22 +249,22 @@ class Ordine
 
     public function creaAutomaticiDaScorteCritiche()
     {
-        $sql = "SELECT a.id_articolo,
-                       a.quantita_in_stock,
-                       a.punto_riordino,
-                       a.id_fornitore_preferito
-                FROM articolo a
-                WHERE a.id_fornitore_preferito IS NOT NULL
-                  AND a.id_fornitore_preferito > 0
-                  AND a.quantita_in_stock < a.punto_riordino";
+        $sql = "SELECT articolo.id_articolo,
+                       articolo.quantita_in_stock,
+                       articolo.punto_riordino,
+                       articolo.id_fornitore_preferito
+                FROM articolo
+                WHERE articolo.id_fornitore_preferito IS NOT NULL
+                  AND articolo.id_fornitore_preferito > 0
+                  AND articolo.quantita_in_stock < articolo.punto_riordino";
         $articoli = $this->pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
 
         $creati = 0;
         $stmtCheck = $this->pdo->prepare("SELECT COUNT(*)
-                                          FROM ordine o
-                                          INNER JOIN comprende c ON c.id_ordine = o.id_ordine
-                                          WHERE c.id_articolo = ?
-                                            AND o.stato_ordine = 'inviato'");
+                                          FROM ordine
+                                          INNER JOIN comprende ON comprende.id_ordine = ordine.id_ordine
+                                          WHERE comprende.id_articolo = ?
+                                            AND ordine.stato_ordine = 'inviato'");
 
         foreach ($articoli as $a) {
             $idArticolo = (int)$a['id_articolo'];
@@ -362,16 +358,4 @@ class Ordine
         return $value;
     }
 
-    // Alias retrocompatibili
-    public function all() { return $this->tutti(); }
-    public function allWithFornitore($filters = []) { return $this->tuttiConFornitore($filters); }
-    public function countByStato($stato) { return $this->contaPerStato($stato); }
-    public function find($id) { return $this->trova($id); }
-    public function findWithFornitore($id) { return $this->trovaConFornitore($id); }
-    public function findDettagli($idOrdine) { return $this->trovaDettagli($idOrdine); }
-    public function getFornitori() { return $this->elencoFornitori(); }
-    public function getArticoli() { return $this->elencoArticoli(); }
-    public function createWithItems($data, $righe = []) { return $this->creaConRighe($data, $righe); }
-    public function updateBase($id, $data) { return $this->aggiornaBase($id, $data); }
-    public function deleteStorico($id) { return $this->eliminaStorico($id); }
 }
