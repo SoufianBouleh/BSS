@@ -1,0 +1,52 @@
+.analytics-card {
+    background: #fff;
+    border: 1px solid var(--gray-200);
+    border-radius: 12px;
+    padding: 1.2rem;
+    box-shadow: var(--shadow);
+    margin-top: 1rem;
+}
+.analytics-title {
+    margin: 0 0 .3rem 0;
+    font-size: 1.15rem;
+    color: var(--gray-900);
+}
+.analytics-sub {
+    margin: 0 0 1rem 0;
+    color: var(--gray-600);
+    font-size: .92rem;
+}
+.analytics-total {
+    font-size: 1.45rem;
+    font-weight: 800;
+    color: #111827;
+    margin-bottom: 1rem;
+}
+.chart-wrap {
+    position: relative;
+    width: 100%;
+    min-height: 340px;
+}
+.chart-empty {
+    color: var(--gray-500);
+    font-style: italic;
+}
+.stats-grid .stat-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+.stats-grid .stat-link .stat-card {
+    cursor: pointer;
+}
+.stats-grid .stat-link .stat-card:hover {
+    border-color: #cbd5e1;
+}
+.stat-value {
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+}
+
+.stats-grid .stat-card h3 {
+    white-space: nowrap;
+}

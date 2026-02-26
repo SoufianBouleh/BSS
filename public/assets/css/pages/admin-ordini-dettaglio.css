@@ -1,0 +1,28 @@
+.summary-card {
+    background: #fff;
+    border: 1px solid var(--gray-200);
+    border-radius: 12px;
+    padding: 1.25rem;
+    box-shadow: var(--shadow);
+    margin-bottom: 1rem;
+}
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: .9rem;
+}
+.summary-item b {
+    display: block;
+    color: var(--gray-500);
+    font-size: .8rem;
+    text-transform: uppercase;
+    letter-spacing: .3px;
+    margin-bottom: .2rem;
+}
+.summary-item span {
+    color: var(--gray-900);
+    font-weight: 600;
+}
+@media (max-width: 768px) {
+    .summary-grid { grid-template-columns: 1fr; }
+}

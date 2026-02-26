@@ -10,12 +10,12 @@ class Richiesta
         $this->pdo = $pdo;
     }
 
-    public function all()
+    public function tutti()
     {
-        return $this->allForAdmin();
+        return $this->tuttePerAdmin();
     }
 
-    public function allForAdmin($filters = [])
+    public function tuttePerAdmin($filters = [])
     {
         $sql = "SELECT r.*,
                        d.nome,
@@ -69,7 +69,7 @@ class Richiesta
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function allByDipendente($idDipendente)
+    public function tuttePerDipendente($idDipendente)
     {
         $sql = "SELECT r.*,
                        COUNT(c.id_articolo) AS righe,
@@ -84,7 +84,7 @@ class Richiesta
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function getDipendenteIdByUtente($idUtente)
+    public function trovaIdDipendenteDaUtente($idUtente)
     {
         $stmt = $this->pdo->prepare("SELECT id_dipendente FROM dipendente WHERE id_utente = ?");
         $stmt->execute([(int)$idUtente]);
@@ -92,12 +92,12 @@ class Richiesta
         return $id ? (int)$id : null;
     }
 
-    public function find($id)
+    public function trova($id)
     {
-        return $this->findWithDetails($id);
+        return $this->trovaConDettagli($id);
     }
 
-    public function findWithDetails($id)
+    public function trovaConDettagli($id)
     {
         $sql = "SELECT r.*,
                        d.nome,
@@ -131,7 +131,7 @@ class Richiesta
         return $richiesta;
     }
 
-    public function updateStato($id, $stato, $note = null)
+    public function aggiornaStato($id, $stato, $note = null)
     {
         $id = (int)$id;
         $stato = trim((string)$stato);
@@ -140,7 +140,7 @@ class Richiesta
             throw new InvalidArgumentException('Stato richiesta non valido.');
         }
 
-        $attuale = $this->find($id);
+        $attuale = $this->trova($id);
         if (!$attuale) {
             throw new InvalidArgumentException('Richiesta non trovata.');
         }
@@ -162,7 +162,7 @@ class Richiesta
         return $stmt->execute([$stato, $dataApprovazione, $noteFinali, $id]);
     }
 
-    public function createByDipendente($idDipendente, $note, $idArticolo = 0, $quantita = 1, $descrizione = '', $urgente = 0)
+    public function creaDaDipendente($idDipendente, $note, $idArticolo = 0, $quantita = 1, $descrizione = '', $urgente = 0)
     {
         $idArticolo = (int)$idArticolo;
         $quantita = max(1, (int)$quantita);
@@ -170,24 +170,17 @@ class Richiesta
             throw new InvalidArgumentException('Seleziona un articolo.');
         }
 
-        $this->pdo->beginTransaction();
-        try {
-            $stmt = $this->pdo->prepare("INSERT INTO richiesta (stato, note, id_dipendente) VALUES ('in_attesa', ?, ?)");
-            $stmt->execute([trim((string)$note), (int)$idDipendente]);
-            $idRichiesta = (int)$this->pdo->lastInsertId();
+        $stmt = $this->pdo->prepare("INSERT INTO richiesta (stato, note, id_dipendente) VALUES ('in_attesa', ?, ?)");
+        $stmt->execute([trim((string)$note), (int)$idDipendente]);
+        $idRichiesta = (int)$this->pdo->lastInsertId();
 
-            $stmtContiene = $this->pdo->prepare("INSERT INTO contiene (id_richiesta, id_articolo, quantita_richiesta, descrizione, urgente)
-                                                 VALUES (?, ?, ?, ?, ?)");
-            $stmtContiene->execute([$idRichiesta, $idArticolo, $quantita, trim((string)$descrizione), (int)$urgente === 1 ? 1 : 0]);
-            $this->pdo->commit();
-            return true;
-        } catch (Throwable $e) {
-            $this->pdo->rollBack();
-            throw $e;
-        }
+        $stmtContiene = $this->pdo->prepare("INSERT INTO contiene (id_richiesta, id_articolo, quantita_richiesta, descrizione, urgente)
+                                             VALUES (?, ?, ?, ?, ?)");
+        $stmtContiene->execute([$idRichiesta, $idArticolo, $quantita, trim((string)$descrizione), (int)$urgente === 1 ? 1 : 0]);
+        return true;
     }
 
-    public function updateByDipendente($idRichiesta, $idDipendente, $note, $idArticolo = 0, $quantita = 1, $descrizione = '', $urgente = 0)
+    public function aggiornaDaDipendente($idRichiesta, $idDipendente, $note, $idArticolo = 0, $quantita = 1, $descrizione = '', $urgente = 0)
     {
         $idArticolo = (int)$idArticolo;
         $quantita = max(1, (int)$quantita);
@@ -195,35 +188,41 @@ class Richiesta
             throw new InvalidArgumentException('Seleziona un articolo.');
         }
 
-        $this->pdo->beginTransaction();
-        try {
-            $stmt = $this->pdo->prepare("UPDATE richiesta
-                                         SET note = ?, stato = 'in_attesa', data_approvazione = NULL
-                                         WHERE id_richiesta = ? AND id_dipendente = ? AND stato IN ('in_attesa', 'respinta')");
-            $stmt->execute([trim((string)$note), (int)$idRichiesta, (int)$idDipendente]);
-            if ($stmt->rowCount() <= 0) {
-                $this->pdo->rollBack();
-                return false;
-            }
-
-            $stmtDelete = $this->pdo->prepare("DELETE FROM contiene WHERE id_richiesta = ?");
-            $stmtDelete->execute([(int)$idRichiesta]);
-
-            $stmtContiene = $this->pdo->prepare("INSERT INTO contiene (id_richiesta, id_articolo, quantita_richiesta, descrizione, urgente)
-                                                 VALUES (?, ?, ?, ?, ?)");
-            $stmtContiene->execute([(int)$idRichiesta, $idArticolo, $quantita, trim((string)$descrizione), (int)$urgente === 1 ? 1 : 0]);
-
-            $this->pdo->commit();
-            return true;
-        } catch (Throwable $e) {
-            $this->pdo->rollBack();
-            throw $e;
+        $stmt = $this->pdo->prepare("UPDATE richiesta
+                                     SET note = ?, stato = 'in_attesa', data_approvazione = NULL
+                                     WHERE id_richiesta = ? AND id_dipendente = ? AND stato IN ('in_attesa', 'respinta')");
+        $stmt->execute([trim((string)$note), (int)$idRichiesta, (int)$idDipendente]);
+        if ($stmt->rowCount() <= 0) {
+            return false;
         }
+
+        $stmtDelete = $this->pdo->prepare("DELETE FROM contiene WHERE id_richiesta = ?");
+        $stmtDelete->execute([(int)$idRichiesta]);
+
+        $stmtContiene = $this->pdo->prepare("INSERT INTO contiene (id_richiesta, id_articolo, quantita_richiesta, descrizione, urgente)
+                                             VALUES (?, ?, ?, ?, ?)");
+        $stmtContiene->execute([(int)$idRichiesta, $idArticolo, $quantita, trim((string)$descrizione), (int)$urgente === 1 ? 1 : 0]);
+        return true;
     }
 
-    public function delete($id)
+    public function elimina($id)
     {
+        $id = (int)$id;
+        $stmtDett = $this->pdo->prepare("DELETE FROM contiene WHERE id_richiesta = ?");
+        $stmtDett->execute([$id]);
         $stmt = $this->pdo->prepare("DELETE FROM richiesta WHERE id_richiesta = ?");
-        return $stmt->execute([(int)$id]);
+        return $stmt->execute([$id]);
     }
+
+    // Alias retrocompatibili
+    public function all() { return $this->tutti(); }
+    public function allForAdmin($filters = []) { return $this->tuttePerAdmin($filters); }
+    public function allByDipendente($idDipendente) { return $this->tuttePerDipendente($idDipendente); }
+    public function getDipendenteIdByUtente($idUtente) { return $this->trovaIdDipendenteDaUtente($idUtente); }
+    public function find($id) { return $this->trova($id); }
+    public function findWithDetails($id) { return $this->trovaConDettagli($id); }
+    public function updateStato($id, $stato, $note = null) { return $this->aggiornaStato($id, $stato, $note); }
+    public function createByDipendente($idDipendente, $note, $idArticolo = 0, $quantita = 1, $descrizione = '', $urgente = 0) { return $this->creaDaDipendente($idDipendente, $note, $idArticolo, $quantita, $descrizione, $urgente); }
+    public function updateByDipendente($idRichiesta, $idDipendente, $note, $idArticolo = 0, $quantita = 1, $descrizione = '', $urgente = 0) { return $this->aggiornaDaDipendente($idRichiesta, $idDipendente, $note, $idArticolo, $quantita, $descrizione, $urgente); }
+    public function delete($id) { return $this->elimina($id); }
 }
