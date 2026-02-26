@@ -1,0 +1,38 @@
+.filters {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: .75rem;
+    background: #fff;
+    border: 1px solid var(--gray-200);
+    border-radius: 12px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+.filters input,
+.filters select {
+    width: 100%;
+    padding: .65rem .75rem;
+    margin: 0;
+    border: 1px solid var(--gray-300);
+    border-radius: 8px;
+}
+.status {
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: .75rem;
+}
+.status-in_attesa { color: #b45309; }
+.status-approvata { color: #166534; }
+.status-respinta { color: #991b1b; }
+.status-evasa { color: #1d4ed8; }
+.data-table th:nth-child(5),
+.data-table td:nth-child(5) {
+    text-align: center;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+.data-table th:first-child,
+.data-table td:first-child {
+    width: 44px;
+}

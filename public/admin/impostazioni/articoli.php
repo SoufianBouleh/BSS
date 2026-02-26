@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 session_start();
 require_once __DIR__ . '/../../../app/config.php';
 
@@ -36,23 +36,18 @@ $articoli = $pdo->query("SELECT id_articolo, nome_articolo, prezzo_unitario, pun
 </head>
 <body>
 <div class="dashboard-wrapper dashboard-admin">
-    <div class="dashboard-sidebar">
-        <div style="padding:1.5rem;border-bottom:1px solid var(--gray-800);display:flex;align-items:center;justify-content:center;">
-            <img src="../../assets/images/logo.png" alt="Logo" style="max-width:120px;height:auto;">
-        </div>
-        <a href="../impostazioni/index.php" class="active">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.75rem;"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-            Impostazioni
-        </a>
-        <a href="../../logout.php" style="border-top:1px solid var(--gray-800);margin-top:auto;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.75rem;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
-            Logout
-        </a>
-    </div>
+        <?php
+$sidebarBase = '../';
+$assetPrefix = '../../assets';
+$logoutPath = '../../logout.php';
+$activeSection = 'impostazioni';
+include __DIR__ . '/../includes/sidebar.php';
+?>
+
     <div class="dashboard-content">
         <div class="page-header">
             <h1>Aggiorna Articoli</h1>
-            <a href="index.php" class="btn btn-warning">Torna a impostazioni</a>
+            <a href="index.php" class="btn btn-warning">Torna alla Home</a>
         </div>
         <?php if (isset($_GET['ok'])): ?><div class="alert alert-success">Articolo aggiornato.</div><?php endif; ?>
         <table class="data-table">
@@ -88,6 +83,11 @@ $articoli = $pdo->query("SELECT id_articolo, nome_articolo, prezzo_unitario, pun
 </div>
 </body>
 </html>
+
+
+
+
+
 
 
 

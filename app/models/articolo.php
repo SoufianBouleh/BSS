@@ -9,20 +9,20 @@ class Articolo
         $this->pdo = $pdo;
     }
 
-    public function all()
+    public function tutti()
     {
         $stmt = $this->pdo->query("SELECT * FROM articolo");
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function find($id)
+    public function trova($id)
     {
         $stmt = $this->pdo->prepare("SELECT * FROM articolo WHERE id_articolo = ?");
         $stmt->execute([$id]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
-    public function create($data)
+    public function crea($data)
     {
         $sql = "INSERT INTO articolo
         (nome_articolo, prezzo_unitario, unita_misura, disponibile, quantita_in_stock, punto_riordino, descrizione, categoria, id_fornitore_preferito)
@@ -42,7 +42,7 @@ class Articolo
         ]);
     }
 
-    public function update($id, $data)
+    public function aggiorna($id, $data)
     {
         $sql = "UPDATE articolo SET
             nome_articolo = ?, 
@@ -72,19 +72,29 @@ class Articolo
     }
     
 
-    public function delete($id)
+    public function elimina($id)
     {
         $stmt = $this->pdo->prepare("DELETE FROM articolo WHERE id_articolo = ?");
         return $stmt->execute([$id]);
     }
-    public function notOrderedSince6Months() {
-    $sql = "SELECT a.* FROM articolo a 
-            WHERE a.id_articolo NOT IN (
-                SELECT DISTINCT c.id_articolo 
-                FROM comprende c
-                JOIN ordine o ON c.id_ordine = o.id_ordine
-                WHERE o.data_ordine >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
-            )";
-    return $this->pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
-}
+
+    public function nonOrdinatiDaSeiMesi()
+    {
+        $sql = "SELECT a.* FROM articolo a
+                WHERE a.id_articolo NOT IN (
+                    SELECT DISTINCT c.id_articolo
+                    FROM comprende c
+                    JOIN ordine o ON c.id_ordine = o.id_ordine
+                    WHERE o.data_ordine >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
+                )";
+        return $this->pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    // Alias retrocompatibili
+    public function all() { return $this->tutti(); }
+    public function find($id) { return $this->trova($id); }
+    public function create($data) { return $this->crea($data); }
+    public function update($id, $data) { return $this->aggiorna($id, $data); }
+    public function delete($id) { return $this->elimina($id); }
+    public function notOrderedSince6Months() { return $this->nonOrdinatiDaSeiMesi(); }
 }

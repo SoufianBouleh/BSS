@@ -99,15 +99,28 @@ body::after {
     display: flex;
     flex-direction: column;
 }
-.dashboard-sidebar > div:first-child::after {
-    content: "BSS";
-    display: block;
-    margin-top: .45rem;
-    color: #d1d5db;
-    font-size: .78rem;
-    font-weight: 700;
-    letter-spacing: .12em;
+.brand-text {
+    margin-top: .4rem;
     text-align: center;
+    line-height: 1.1;
+}
+
+.brand-main {
+    display: block;
+    color: #f3f4f6;
+    font-size: 1.18rem;
+    font-weight: 900;
+    letter-spacing: .2em;
+}
+
+.brand-sub {
+    display: block;
+    margin-top: .15rem;
+    color: #9ca3af;
+    font-size: .68rem;
+    font-weight: 600;
+    text-transform: lowercase;
+    letter-spacing: .08em;
 }
 
 .dashboard-sidebar h2 {
@@ -361,7 +374,16 @@ body::after {
 }
 
 .data-table tbody tr:hover {
-    background: var(--gray-50);
+    background: #e5e7eb;
+}
+
+.data-table tbody tr:hover td {
+    color: #111827;
+}
+
+.data-table tbody tr.is-selected,
+.data-table tbody tr.is-selected:hover {
+    background: #d1d5db;
 }
 
 .data-table tbody tr:last-child {
@@ -808,18 +830,36 @@ body::after {
     height: auto;
 }
 
-.dashboard-sidebar > div:first-child::after {
-    margin-top: .3rem;
-    color: #f3f4f6;
-    font-size: .9rem;
-    font-weight: 800;
-    letter-spacing: .18em;
+.brand-main {
+    font-size: 1.28rem;
+    letter-spacing: .22em;
+}
+
+.brand-sub {
+    font-size: .7rem;
 }
 
 .dashboard-sidebar a {
     gap: .45rem;
 }
 
+.dashboard-sidebar a.scorte-link {
+    color: #f87171 !important;
+}
+
+.dashboard-sidebar a.scorte-link svg {
+    color: #f87171 !important;
+    stroke: currentColor !important;
+}
+
+.dashboard-sidebar a.inattivi-link {
+    color: #facc15 !important;
+}
+
+.dashboard-sidebar a.inattivi-link svg {
+    color: #facc15 !important;
+    stroke: currentColor !important;
+}
 .dashboard-sidebar a.active:not(.scorte-link) {
     border-left-color: var(--white) !important;
     color: var(--white) !important;
@@ -831,24 +871,31 @@ body::after {
     stroke: currentColor !important;
 }
 
-.dashboard-sidebar a.scorte-link {
+.dashboard-sidebar a.active.scorte-link {
     border-left-color: #dc2626 !important;
     color: #f87171 !important;
-    background: rgba(220, 38, 38, 0.08);
+    background: rgba(220, 38, 38, 0.14) !important;
 }
 
-.dashboard-sidebar a.scorte-link:hover {
-    background: rgba(220, 38, 38, 0.12);
-    color: #fecaca !important;
-}
-
-.dashboard-sidebar a.scorte-link svg {
+.dashboard-sidebar a.active.scorte-link svg {
     color: #f87171 !important;
     stroke: currentColor !important;
 }
 
+.dashboard-sidebar a.active.inattivi-link {
+    border-left-color: #ca8a04 !important;
+    color: #facc15 !important;
+    background: rgba(234, 179, 8, 0.14) !important;
+}
+
+.dashboard-sidebar a.active.inattivi-link svg {
+    color: #facc15 !important;
+    stroke: currentColor !important;
+}
+
 .dashboard-sidebar a[href*="logout.php"] {
-    margin-bottom: 4.2rem;
+    margin-bottom: 2.8rem;
+    padding-top: 1.15rem;
 }
 
 @media (max-width: 768px) {
@@ -871,3 +918,4 @@ body::after {
     transform: translateY(-2px);
     border-color: var(--gray-300);
 }
+

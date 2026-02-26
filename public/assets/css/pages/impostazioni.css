@@ -1,0 +1,59 @@
+.cards {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+}
+.card-link {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border: 1px solid var(--gray-200);
+    border-radius: 12px;
+    padding: 1.2rem;
+    text-decoration: none;
+    color: inherit;
+    box-shadow: var(--shadow);
+}
+.card-link h3 { margin-bottom: .45rem; }
+.card-link p {
+    color: var(--gray-600);
+    font-size: .95rem;
+}
+.settings-box {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border: 1px solid var(--gray-200);
+    border-radius: 12px;
+    padding: 1.1rem;
+    margin-bottom: 1rem;
+}
+.credenziali-card {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border: 1px solid var(--gray-200);
+    border-radius: 12px;
+    padding: 1.2rem;
+    box-shadow: var(--shadow);
+}
+.credenziali-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .9rem;
+}
+.credenziale-item {
+    background: #fff;
+    border: 1px solid var(--gray-200);
+    border-radius: 8px;
+    padding: .8rem;
+}
+.credenziale-item small {
+    display: block;
+    color: var(--gray-500);
+    font-size: .75rem;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    margin-bottom: .2rem;
+}
+.credenziale-item strong {
+    color: var(--gray-900);
+    word-break: break-word;
+}
+@media (max-width: 768px) {
+    .credenziali-grid { grid-template-columns: 1fr; }
+}

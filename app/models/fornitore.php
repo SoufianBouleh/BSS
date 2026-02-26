@@ -9,20 +9,20 @@ class Fornitore
         $this->pdo = $pdo;
     }
 
-    public function all()
+    public function tutti()
     {
         $stmt = $this->pdo->query("SELECT * FROM fornitore");
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function find($id)
+    public function trova($id)
     {
         $stmt = $this->pdo->prepare("SELECT * FROM fornitore WHERE id_fornitore = ?");
         $stmt->execute([$id]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
-    public function create($data)
+    public function crea($data)
     {
         $sql = "INSERT INTO fornitore
         (nome_fornitore, cf,mail, indirizzo, citta, tel, p_iva, iban)
@@ -41,7 +41,7 @@ class Fornitore
         ]);
     }
 
-    public function update($id, $data)
+    public function aggiorna($id, $data)
     {
         $sql = "UPDATE fornitore SET
         nome_fornitore=?, cf=?,mail=?, indirizzo=?, citta=?, tel=?, p_iva=?, iban=?
@@ -61,11 +61,18 @@ class Fornitore
         ]);
     }
 
-    public function delete($id)
+    public function elimina($id)
     {
         $stmt = $this->pdo->prepare("DELETE FROM fornitore WHERE id_fornitore = ?");
         return $stmt->execute([$id]);
 
         //set null per ordine  e articolo e mettere coalessing in caso di null
-    } 
+    }
+
+    // Alias retrocompatibili
+    public function all() { return $this->tutti(); }
+    public function find($id) { return $this->trova($id); }
+    public function create($data) { return $this->crea($data); }
+    public function update($id, $data) { return $this->aggiorna($id, $data); }
+    public function delete($id) { return $this->elimina($id); }
 }

@@ -10,12 +10,12 @@ class Ordine
         $this->pdo = $pdo;
     }
 
-    public function all()
+    public function tutti()
     {
-        return $this->allWithFornitore();
+        return $this->tuttiConFornitore();
     }
 
-    public function allWithFornitore($filters = [])
+    public function tuttiConFornitore($filters = [])
     {
         $sql = "SELECT o.*, f.nome_fornitore
                 FROM ordine o
@@ -57,7 +57,7 @@ class Ordine
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function countByStato($stato)
+    public function contaPerStato($stato)
     {
         if (!in_array($stato, $this->statiValidi, true)) {
             return 0;
@@ -67,14 +67,14 @@ class Ordine
         return (int)$stmt->fetchColumn();
     }
 
-    public function find($id)
+    public function trova($id)
     {
         $stmt = $this->pdo->prepare("SELECT * FROM ordine WHERE id_ordine = ?");
         $stmt->execute([(int)$id]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
-    public function findWithFornitore($id)
+    public function trovaConFornitore($id)
     {
         $sql = "SELECT o.*, f.nome_fornitore
                 FROM ordine o
@@ -85,7 +85,7 @@ class Ordine
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
-    public function findDettagli($idOrdine)
+    public function trovaDettagli($idOrdine)
     {
         $sql = "SELECT c.id_articolo,
                        a.nome_articolo,
@@ -106,13 +106,13 @@ class Ordine
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function getFornitori()
+    public function elencoFornitori()
     {
         $stmt = $this->pdo->query("SELECT id_fornitore, nome_fornitore FROM fornitore ORDER BY nome_fornitore ASC");
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function getArticoli()
+    public function elencoArticoli()
     {
         $sql = "SELECT id_articolo, nome_articolo, prezzo_unitario, unita_misura
                 FROM articolo
@@ -121,7 +121,7 @@ class Ordine
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function createWithItems($data, $righe = [])
+    public function creaConRighe($data, $righe = [])
     {
         $dataOrdine = $this->normalizzaDatiOrdine($data);
         $righePulite = $this->normalizzaRighe($righe);
@@ -130,59 +130,50 @@ class Ordine
             throw new InvalidArgumentException('Inserisci almeno un articolo con quantita maggiore di zero.');
         }
 
-        $this->pdo->beginTransaction();
+        $sqlOrdine = "INSERT INTO ordine
+            (data_ordine, data_consegna_prevista, data_consegna_effettiva, stato_ordine, costo_totale, id_fornitore)
+            VALUES (?, ?, NULL, 'inviato', 0, ?)";
+        $stmtOrdine = $this->pdo->prepare($sqlOrdine);
+        $stmtOrdine->execute([
+            $dataOrdine['data_ordine'],
+            $dataOrdine['data_consegna_prevista'],
+            $dataOrdine['id_fornitore']
+        ]);
 
-        try {
-            $sqlOrdine = "INSERT INTO ordine
-                (data_ordine, data_consegna_prevista, data_consegna_effettiva, stato_ordine, costo_totale, id_fornitore)
-                VALUES (?, ?, NULL, 'inviato', 0, ?)";
-            $stmtOrdine = $this->pdo->prepare($sqlOrdine);
-            $stmtOrdine->execute([
-                $dataOrdine['data_ordine'],
-                $dataOrdine['data_consegna_prevista'],
-                $dataOrdine['id_fornitore']
-            ]);
+        $idOrdine = (int)$this->pdo->lastInsertId();
+        $prezzi = $this->prezziArticoliMap(array_column($righePulite, 'id_articolo'));
 
-            $idOrdine = (int)$this->pdo->lastInsertId();
-            $prezzi = $this->prezziArticoliMap(array_column($righePulite, 'id_articolo'));
+        $sqlRiga = "INSERT INTO comprende (id_ordine, id_articolo, quantita_ordinata, prezzo)
+                    VALUES (?, ?, ?, ?)";
+        $stmtRiga = $this->pdo->prepare($sqlRiga);
 
-            $sqlRiga = "INSERT INTO comprende (id_ordine, id_articolo, quantita_ordinata, prezzo)
-                        VALUES (?, ?, ?, ?)";
-            $stmtRiga = $this->pdo->prepare($sqlRiga);
-
-            $totale = 0.0;
-            foreach ($righePulite as $riga) {
-                if (!isset($prezzi[$riga['id_articolo']])) {
-                    throw new InvalidArgumentException('Articolo non valido nella composizione ordine.');
-                }
-
-                $prezzoUnitario = (float)$prezzi[$riga['id_articolo']];
-                $totaleRiga = round($prezzoUnitario * $riga['quantita'], 2);
-                $totale += $totaleRiga;
-
-                $stmtRiga->execute([
-                    $idOrdine,
-                    $riga['id_articolo'],
-                    $riga['quantita'],
-                    $totaleRiga
-                ]);
+        $totale = 0.0;
+        foreach ($righePulite as $riga) {
+            if (!isset($prezzi[$riga['id_articolo']])) {
+                throw new InvalidArgumentException('Articolo non valido nella composizione ordine.');
             }
 
-            $stmtTotale = $this->pdo->prepare("UPDATE ordine SET costo_totale = ? WHERE id_ordine = ?");
-            $stmtTotale->execute([round($totale, 2), $idOrdine]);
+            $prezzoUnitario = (float)$prezzi[$riga['id_articolo']];
+            $totaleRiga = round($prezzoUnitario * $riga['quantita'], 2);
+            $totale += $totaleRiga;
 
-            $this->pdo->commit();
-            return $idOrdine;
-        } catch (Throwable $e) {
-            $this->pdo->rollBack();
-            throw $e;
+            $stmtRiga->execute([
+                $idOrdine,
+                $riga['id_articolo'],
+                $riga['quantita'],
+                $totaleRiga
+            ]);
         }
+
+        $stmtTotale = $this->pdo->prepare("UPDATE ordine SET costo_totale = ? WHERE id_ordine = ?");
+        $stmtTotale->execute([round($totale, 2), $idOrdine]);
+        return $idOrdine;
     }
 
-    public function updateBase($id, $data)
+    public function aggiornaBase($id, $data)
     {
         $id = (int)$id;
-        $attuale = $this->find($id);
+        $attuale = $this->trova($id);
         if (!$attuale) {
             throw new InvalidArgumentException('Ordine non trovato.');
         }
@@ -227,40 +218,30 @@ class Ordine
     public function conferma($id)
     {
         $id = (int)$id;
-        $this->pdo->beginTransaction();
+        $stmtCheck = $this->pdo->prepare("SELECT stato_ordine FROM ordine WHERE id_ordine = ?");
+        $stmtCheck->execute([$id]);
+        $ordine = $stmtCheck->fetch(PDO::FETCH_ASSOC);
 
-        try {
-            $stmtCheck = $this->pdo->prepare("SELECT stato_ordine FROM ordine WHERE id_ordine = ? FOR UPDATE");
-            $stmtCheck->execute([$id]);
-            $ordine = $stmtCheck->fetch(PDO::FETCH_ASSOC);
-
-            if (!$ordine || $ordine['stato_ordine'] !== 'inviato') {
-                $this->pdo->rollBack();
-                return false;
-            }
-
-            $sqlStock = "UPDATE articolo a
-                         INNER JOIN comprende c ON c.id_articolo = a.id_articolo
-                         SET a.quantita_in_stock = a.quantita_in_stock + c.quantita_ordinata
-                         WHERE c.id_ordine = ?";
-            $stmtStock = $this->pdo->prepare($sqlStock);
-            $stmtStock->execute([$id]);
-
-            $stmtOrdine = $this->pdo->prepare("UPDATE ordine
-                                               SET stato_ordine = 'confermato',
-                                                   data_consegna_effettiva = CURDATE()
-                                               WHERE id_ordine = ?");
-            $stmtOrdine->execute([$id]);
-
-            $this->pdo->commit();
-            return true;
-        } catch (Throwable $e) {
-            $this->pdo->rollBack();
-            throw $e;
+        if (!$ordine || $ordine['stato_ordine'] !== 'inviato') {
+            return false;
         }
+
+        $sqlStock = "UPDATE articolo a
+                     INNER JOIN comprende c ON c.id_articolo = a.id_articolo
+                     SET a.quantita_in_stock = a.quantita_in_stock + c.quantita_ordinata
+                     WHERE c.id_ordine = ?";
+        $stmtStock = $this->pdo->prepare($sqlStock);
+        $stmtStock->execute([$id]);
+
+        $stmtOrdine = $this->pdo->prepare("UPDATE ordine
+                                           SET stato_ordine = 'confermato',
+                                               data_consegna_effettiva = CURDATE()
+                                           WHERE id_ordine = ?");
+        $stmtOrdine->execute([$id]);
+        return true;
     }
 
-    public function deleteStorico($id)
+    public function eliminaStorico($id)
     {
         $id = (int)$id;
         $stmt = $this->pdo->prepare("DELETE FROM ordine
@@ -268,6 +249,49 @@ class Ordine
                                        AND stato_ordine IN ('confermato', 'rifiutato', 'annullato', 'consegnato')");
         $stmt->execute([$id]);
         return $stmt->rowCount() > 0;
+    }
+
+    public function creaAutomaticiDaScorteCritiche()
+    {
+        $sql = "SELECT a.id_articolo,
+                       a.quantita_in_stock,
+                       a.punto_riordino,
+                       a.id_fornitore_preferito
+                FROM articolo a
+                WHERE a.id_fornitore_preferito IS NOT NULL
+                  AND a.id_fornitore_preferito > 0
+                  AND a.quantita_in_stock < a.punto_riordino";
+        $articoli = $this->pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+
+        $creati = 0;
+        $stmtCheck = $this->pdo->prepare("SELECT COUNT(*)
+                                          FROM ordine o
+                                          INNER JOIN comprende c ON c.id_ordine = o.id_ordine
+                                          WHERE c.id_articolo = ?
+                                            AND o.stato_ordine = 'inviato'");
+
+        foreach ($articoli as $a) {
+            $idArticolo = (int)$a['id_articolo'];
+            $idFornitore = (int)$a['id_fornitore_preferito'];
+
+            $stmtCheck->execute([$idArticolo]);
+            if ((int)$stmtCheck->fetchColumn() > 0) {
+                continue;
+            }
+
+            $quantita = max(1, ((int)$a['punto_riordino'] * 2) - (int)$a['quantita_in_stock']);
+            $this->creaConRighe([
+                'data_ordine' => date('Y-m-d'),
+                'data_consegna_prevista' => date('Y-m-d', strtotime('+7 days')),
+                'id_fornitore' => $idFornitore
+            ], [[
+                'id_articolo' => $idArticolo,
+                'quantita' => $quantita
+            ]]);
+            $creati++;
+        }
+
+        return $creati;
     }
 
     private function normalizzaDatiOrdine($data)
@@ -337,4 +361,17 @@ class Ordine
         }
         return $value;
     }
+
+    // Alias retrocompatibili
+    public function all() { return $this->tutti(); }
+    public function allWithFornitore($filters = []) { return $this->tuttiConFornitore($filters); }
+    public function countByStato($stato) { return $this->contaPerStato($stato); }
+    public function find($id) { return $this->trova($id); }
+    public function findWithFornitore($id) { return $this->trovaConFornitore($id); }
+    public function findDettagli($idOrdine) { return $this->trovaDettagli($idOrdine); }
+    public function getFornitori() { return $this->elencoFornitori(); }
+    public function getArticoli() { return $this->elencoArticoli(); }
+    public function createWithItems($data, $righe = []) { return $this->creaConRighe($data, $righe); }
+    public function updateBase($id, $data) { return $this->aggiornaBase($id, $data); }
+    public function deleteStorico($id) { return $this->eliminaStorico($id); }
 }
