@@ -49,7 +49,7 @@ include __DIR__ . '/../includes/sidebar.php';
         <div class="filtri-box">
             <div>
                 <label>Cerca</label><br>
-                <input type="text" id="cerca" placeholder="Nome articolo..." style="min-width:200px;">
+                <input type="text" id="cerca" placeholder="Nome articolo...">
             </div>
             <div>
                 <label>Categoria</label><br>
@@ -62,7 +62,7 @@ include __DIR__ . '/../includes/sidebar.php';
             </div>
             <div>
                 <label>Prezzo max (&euro;)</label><br>
-                <input type="number" id="filtroPrezzo" placeholder="es. 50" style="width:100px;" min="0" step="0.01">
+                <input type="number" id="filtroPrezzo" placeholder="es. 50" min="0" step="0.01">
             </div>
             <div>
                 <label>Stock</label><br>
@@ -73,7 +73,7 @@ include __DIR__ . '/../includes/sidebar.php';
                     <option value="zero">Esaurito (0)</option>
                 </select>
             </div>
-            <div style="align-self:flex-end;">
+            <div>
                 <button class="btn-reset" id="btnReset">Reset</button>
             </div>
         </div>

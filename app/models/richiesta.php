@@ -162,6 +162,166 @@ class Richiesta
         return $stmt->execute([$stato, $dataApprovazione, $noteFinali, $id]);
     }
 
+    public function approvaECreaOrdini($idRichiesta)
+    {
+        $idRichiesta = (int)$idRichiesta;
+        $richiesta = $this->trovaConDettagli($idRichiesta);
+        if (!$richiesta) {
+            return ['ok' => false, 'errore' => 'Richiesta non trovata.'];
+        }
+
+        $statoAttuale = (string)($richiesta['stato'] ?? '');
+        if (!in_array($statoAttuale, ['in_attesa', 'respinta'], true)) {
+            return ['ok' => false, 'errore' => 'Stato richiesta non valido per approvazione.'];
+        }
+
+        $dettagli = $richiesta['dettagli'] ?? [];
+        if (empty($dettagli)) {
+            return ['ok' => false, 'errore' => 'La richiesta non contiene articoli.'];
+        }
+
+        $idsArticoli = [];
+        foreach ($dettagli as $riga) {
+            $idArticolo = (int)($riga['id_articolo'] ?? 0);
+            if ($idArticolo > 0) {
+                $idsArticoli[] = $idArticolo;
+            }
+        }
+        $idsArticoli = array_values(array_unique($idsArticoli));
+        if (empty($idsArticoli)) {
+            return ['ok' => false, 'errore' => 'Nessun articolo valido nella richiesta.'];
+        }
+
+        $placeholders = implode(',', array_fill(0, count($idsArticoli), '?'));
+        $stmtArticoli = $this->pdo->prepare("SELECT id_articolo, id_fornitore_preferito
+                                             FROM articolo
+                                             WHERE id_articolo IN ($placeholders)");
+        $stmtArticoli->execute($idsArticoli);
+        $mappaFornitore = [];
+        foreach ($stmtArticoli->fetchAll(PDO::FETCH_ASSOC) as $a) {
+            $mappaFornitore[(int)$a['id_articolo']] = (int)($a['id_fornitore_preferito'] ?? 0);
+        }
+
+        $righePerFornitore = [];
+        $saltate = 0;
+        foreach ($dettagli as $riga) {
+            $idArticolo = (int)($riga['id_articolo'] ?? 0);
+            $quantita = (int)($riga['quantita_richiesta'] ?? 0);
+            $idFornitore = (int)($mappaFornitore[$idArticolo] ?? 0);
+            if ($idArticolo <= 0 || $quantita <= 0 || $idFornitore <= 0) {
+                $saltate++;
+                continue;
+            }
+            if (!isset($righePerFornitore[$idFornitore])) {
+                $righePerFornitore[$idFornitore] = [];
+            }
+            $righePerFornitore[$idFornitore][] = [
+                'id_articolo' => $idArticolo,
+                'quantita' => $quantita
+            ];
+        }
+
+        if (empty($righePerFornitore)) {
+            return ['ok' => false, 'errore' => 'Nessun articolo ordinabile: imposta fornitore preferito sugli articoli richiesti.'];
+        }
+
+        require_once __DIR__ . '/ordine.php';
+        $ordineModel = new Ordine($this->pdo);
+        $ordiniCreati = [];
+        foreach ($righePerFornitore as $idFornitore => $righe) {
+            $idOrdine = $ordineModel->creaConRighe([
+                'data_ordine' => date('Y-m-d'),
+                'data_consegna_prevista' => date('Y-m-d', strtotime('+7 days')),
+                'id_fornitore' => (int)$idFornitore
+            ], $righe);
+            $ordiniCreati[] = (int)$idOrdine;
+        }
+
+        if (empty($ordiniCreati)) {
+            return ['ok' => false, 'errore' => 'Nessun ordine creato.'];
+        }
+
+        $noteBase = trim((string)($richiesta['note'] ?? ''));
+        $testoOrdini = 'Ordini creati: #' . implode(', #', $ordiniCreati);
+        if ($saltate > 0) {
+            $testoOrdini .= " (righe saltate: {$saltate})";
+        }
+        $noteFinali = $noteBase === '' ? $testoOrdini : ($noteBase . ' | ' . $testoOrdini);
+
+        $stmtAggiorna = $this->pdo->prepare("UPDATE richiesta
+                                             SET stato = ?, data_approvazione = ?, note = ?
+                                             WHERE id_richiesta = ?");
+        $stmtAggiorna->execute(['approvata', date('Y-m-d H:i:s'), $noteFinali, $idRichiesta]);
+
+        return [
+            'ok' => true,
+            'ordini' => $ordiniCreati,
+            'saltate' => $saltate
+        ];
+    }
+
+    public function approvaECreaOrdineSemplice($idRichiesta)
+    {
+        $idRichiesta = (int)$idRichiesta;
+        $richiesta = $this->trovaConDettagli($idRichiesta);
+        if (!$richiesta) {
+            return ['ok' => false, 'errore' => 'Richiesta non trovata.'];
+        }
+
+        $statoAttuale = (string)($richiesta['stato'] ?? '');
+        if (!in_array($statoAttuale, ['in_attesa', 'respinta'], true)) {
+            return ['ok' => false, 'errore' => 'Richiesta non approvabile in questo stato.'];
+        }
+
+        $dettagli = $richiesta['dettagli'] ?? [];
+        if (empty($dettagli)) {
+            return ['ok' => false, 'errore' => 'La richiesta non contiene articoli.'];
+        }
+
+        $primaRiga = null;
+        foreach ($dettagli as $riga) {
+            if ((int)($riga['id_articolo'] ?? 0) > 0 && (int)($riga['quantita_richiesta'] ?? 0) > 0) {
+                $primaRiga = $riga;
+                break;
+            }
+        }
+        if ($primaRiga === null) {
+            return ['ok' => false, 'errore' => 'Nessun articolo valido nella richiesta.'];
+        }
+
+        $idArticolo = (int)$primaRiga['id_articolo'];
+        $quantita = (int)$primaRiga['quantita_richiesta'];
+
+        $stmtArt = $this->pdo->prepare("SELECT id_fornitore_preferito FROM articolo WHERE id_articolo = ?");
+        $stmtArt->execute([$idArticolo]);
+        $idFornitore = (int)$stmtArt->fetchColumn();
+        if ($idFornitore <= 0) {
+            return ['ok' => false, 'errore' => 'L\'articolo della richiesta non ha fornitore preferito.'];
+        }
+
+        require_once __DIR__ . '/ordine.php';
+        $ordineModel = new Ordine($this->pdo);
+        $idOrdine = $ordineModel->creaConRighe([
+            'data_ordine' => date('Y-m-d'),
+            'data_consegna_prevista' => date('Y-m-d', strtotime('+7 days')),
+            'id_fornitore' => $idFornitore
+        ], [[
+            'id_articolo' => $idArticolo,
+            'quantita' => $quantita
+        ]]);
+
+        $noteBase = trim((string)($richiesta['note'] ?? ''));
+        $notaOrdine = "Ordine creato: #{$idOrdine}";
+        $noteFinali = $noteBase === '' ? $notaOrdine : ($noteBase . ' | ' . $notaOrdine);
+
+        $stmtAggiorna = $this->pdo->prepare("UPDATE richiesta
+                                             SET stato = ?, data_approvazione = ?, note = ?
+                                             WHERE id_richiesta = ?");
+        $stmtAggiorna->execute(['approvata', date('Y-m-d H:i:s'), $noteFinali, $idRichiesta]);
+
+        return ['ok' => true, 'id_ordine' => (int)$idOrdine];
+    }
+
     public function creaDaDipendente($idDipendente, $note, $idArticolo = 0, $quantita = 1, $descrizione = '', $urgente = 0)
     {
         $idArticolo = (int)$idArticolo;
